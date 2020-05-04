@@ -94,12 +94,18 @@ void gnrc_sixlowpan_dispatch_send(gnrc_pktsnip_t *pkt, void *context,
     (void)context;
     (void)page;
     assert(pkt->type == GNRC_NETTYPE_NETIF);
+    if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_BATMAN, GNRC_NETREG_DEMUX_CTX_ALL, pkt))
+    {
+        DEBUG("6lo: no BATMAN thread found\n");
+        gnrc_pktbuf_release(pkt);
+    }
+    /*
     gnrc_netif_hdr_t *hdr = pkt->data;
     if (gnrc_netif_send(gnrc_netif_get_by_pid(hdr->if_pid), pkt) < 1) {
         DEBUG("6lo: unable to send %p over interface %u\n", (void *)pkt,
               hdr->if_pid);
         gnrc_pktbuf_release(pkt);
-    }
+    }*/
 }
 
 void gnrc_sixlowpan_multiplex_by_size(gnrc_pktsnip_t *pkt,
@@ -291,12 +297,13 @@ static void _send(gnrc_pktsnip_t *pkt)
         return;
     }
 
-#ifdef MODULE_GNRC_SIXLOWPAN_IPHC
+//dirty hack to suppress fragmentation (it causes errors over multiple hops)
+/*#ifdef MODULE_GNRC_SIXLOWPAN_IPHC
     if (netif->flags & GNRC_NETIF_FLAGS_6LO_HC) {
         gnrc_sixlowpan_iphc_send(pkt, NULL, 0);
         return;
     }
-#endif
+#endif*/
     if (!_add_uncompr_disp(pkt)) {
         /* adding uncompressed dispatch failed */
         DEBUG("6lo: no space left in packet buffer\n");

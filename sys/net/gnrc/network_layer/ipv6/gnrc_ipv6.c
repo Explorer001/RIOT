@@ -482,6 +482,34 @@ static void _send_by_netif_hdr(gnrc_pktsnip_t *pkt)
 }
 #endif  /* MODULE_GNRC_IPV6_EXT_FRAG */
 
+/**
+ * static lookup for batman to replace nib
+ * last byte of ipv6 address is equal to layer 2 address
+ * 
+ * @param dst: destination ip address
+ * @param nce: neighbor chache entry
+ */
+static int _gnrc_batman_l2addr(const ipv6_addr_t *dst, gnrc_ipv6_nib_nc_t *nce)
+{
+    /* just fake up nib entry */
+    memcpy(&(nce->ipv6), dst, sizeof(ipv6_addr_t));
+    memset(&(nce->l2addr), 0, CONFIG_GNRC_IPV6_NIB_L2ADDR_MAX_LEN);
+    nce->l2addr[0] = dst->u8[15];
+    nce->l2addr_len = 1;
+    nce->info = GNRC_IPV6_NIB_ROUTE_INFO_TYPE_UNDEF;
+
+    return 0;
+}
+
+/**
+ * returns network interface (there is only one)
+ * to replace nib interface lookup
+ */
+static gnrc_netif_t *_gnrc_batman_netif(void)
+{
+    return gnrc_netif_iter(NULL);
+}
+
 static void _send_unicast(gnrc_pktsnip_t *pkt, bool prep_hdr,
                           gnrc_netif_t *netif, ipv6_hdr_t *ipv6_hdr,
                           uint8_t netif_hdr_flags)
@@ -489,14 +517,16 @@ static void _send_unicast(gnrc_pktsnip_t *pkt, bool prep_hdr,
     gnrc_ipv6_nib_nc_t nce;
 
     DEBUG("ipv6: send unicast\n");
-    if (gnrc_ipv6_nib_get_next_hop_l2addr(&ipv6_hdr->dst, netif, pkt,
-                                          &nce) < 0) {
+    if (_gnrc_batman_l2addr(&ipv6_hdr->dst, &nce) < 0) {
+    //if (gnrc_ipv6_nib_get_next_hop_l2addr(&ipv6_hdr->dst, netif, pkt,
+    //                                      &nce) < 0) {
         /* packet is released by NIB */
         DEBUG("ipv6: no link-layer address or interface for next hop to %s\n",
               ipv6_addr_to_str(addr_str, &ipv6_hdr->dst, sizeof(addr_str)));
         return;
     }
-    netif = gnrc_netif_get_by_pid(gnrc_ipv6_nib_nc_get_iface(&nce));
+    //netif = gnrc_netif_get_by_pid(gnrc_ipv6_nib_nc_get_iface(&nce));
+    netif = _gnrc_batman_netif();
     assert(netif != NULL);
     if (_safe_fill_ipv6_hdr(netif, pkt, prep_hdr)) {
         DEBUG("ipv6: add interface header to packet\n");

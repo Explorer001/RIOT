@@ -234,11 +234,12 @@ extern "C" {
 /**
  * @brief   Default protocol for data that is coming in
  */
-#ifdef MODULE_GNRC_SIXLOWPAN
+#define CC110X_DEFAULT_PROTOCOL         (GNRC_NETTYPE_BATMAN)
+/*#ifdef MODULE_GNRC_SIXLOWPAN
 #define CC110X_DEFAULT_PROTOCOL         (GNRC_NETTYPE_SIXLOWPAN)
 #else
 #define CC110X_DEFAULT_PROTOCOL         (GNRC_NETTYPE_UNDEF)
-#endif
+#endif*/
 
 /**
  * @defgroup drivers_cc110x_config CC1100/CC1100e/CC1101 Sub-GHz transceiver driver compile configuration
