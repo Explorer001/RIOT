@@ -298,12 +298,12 @@ static void _send(gnrc_pktsnip_t *pkt)
     }
 
 //dirty hack to suppress fragmentation (it causes errors over multiple hops)
-/*#ifdef MODULE_GNRC_SIXLOWPAN_IPHC
+#ifdef MODULE_GNRC_SIXLOWPAN_IPHC
     if (netif->flags & GNRC_NETIF_FLAGS_6LO_HC) {
         gnrc_sixlowpan_iphc_send(pkt, NULL, 0);
         return;
     }
-#endif*/
+#endif
     if (!_add_uncompr_disp(pkt)) {
         /* adding uncompressed dispatch failed */
         DEBUG("6lo: no space left in packet buffer\n");
