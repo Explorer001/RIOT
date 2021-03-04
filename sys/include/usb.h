@@ -24,20 +24,34 @@
 extern "C" {
 #endif
 
+#include "board.h"
+
 /**
  * @defgroup usb_conf USB peripheral compile time configurations
  * @ingroup config
  * @{
  */
 
+/* These can be overridden by boards that should come up with their board
+ * supplier VID/PID pair. Boards should only override this if the RIOT built-in
+ * peripherals are compatible with whatever is usually shipped with that pair
+ * */
+#ifndef INTERNAL_PERIPHERAL_VID
+/** Reserved for RIOT standard peripherals as per http://pid.codes/1209/7D00/ */
+#define INTERNAL_PERIPHERAL_VID (0x1209)
+#endif
+#ifndef INTERNAL_PERIPHERAL_PID
+/** Reserved for RIOT standard peripherals as per http://pid.codes/1209/7D00/ */
+#define INTERNAL_PERIPHERAL_PID (0x7D00)
+#endif
+
 #if !(defined(CONFIG_USB_VID) && defined(CONFIG_USB_PID))
 #ifdef USB_H_USER_IS_RIOT_INTERNAL
-/* Reserved for RIOT standard peripherals as per http://pid.codes/1209/7D00/ */
-#define CONFIG_USB_VID (0x1209)
-#define CONFIG_USB_PID (0x7D00)
+#define CONFIG_USB_VID INTERNAL_PERIPHERAL_VID
+#define CONFIG_USB_PID INTERNAL_PERIPHERAL_PID
 #else
 #error Please configure your vendor and product IDs. For development, you may \
-    set CONFIG_USB_VID=0x1209 CONFIG_USB_PID=0x7D01.
+    set USB_VID=${USB_VID_TESTING} USB_PID=${USB_PID_TESTING}.
 #endif
 #endif
 
@@ -80,6 +94,32 @@ extern "C" {
  */
 #ifndef CONFIG_USB_CONFIGURATION_STR
 #define CONFIG_USB_CONFIGURATION_STR    "USB config"
+#endif
+
+/**
+ * @brief USB peripheral serial string
+ *
+ * Compile-time value to override the serial string with. An LUID-based hex
+ * string is generated when this value is not used.
+ *
+ * This string does not have to be a number, but it must be unique between
+ * devices with identical VID:PID combination.
+ */
+#ifdef DOXYGEN
+#define CONFIG_USB_SERIAL_STR           "RIOT-12345"
+#endif
+
+/**
+ * @brief USB peripheral serial string length
+ *
+ * Maximum value is 63. Sensible values are between 8 to 32 depending on the
+ * number of expected devices.
+ *
+ * The length here is in bytes. The generated hex string is twice as many chars
+ * in length due to conversion from bytes to hex chars.
+ */
+#if !defined(CONFIG_USB_SERIAL_STR) && !defined(CONFIG_USB_SERIAL_BYTE_LENGTH)
+#define CONFIG_USB_SERIAL_BYTE_LENGTH 8
 #endif
 
 /**

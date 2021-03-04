@@ -25,11 +25,12 @@
 
 #include "cpu.h"
 #include "assert.h"
+#include "nrf_clock.h"
 
 #include "nrfble.h"
 #include "net/netdev/ble.h"
 
-#define ENABLE_DEBUG            (0)
+#define ENABLE_DEBUG            0
 #include "debug.h"
 
 /* driver specific device configuration */
@@ -237,6 +238,11 @@ static int _nrfble_init(netdev_t *dev)
 {
     (void)dev;
     assert(_nrfble_dev.driver && _nrfble_dev.event_callback);
+
+    /* the radio need the external HF clock source to be enabled */
+    /* @todo    add proper handling to release the clock whenever the radio is
+     *          idle */
+    clock_hfxo_request();
 
     /* power on the NRFs radio */
     NRF_RADIO->POWER = 1;

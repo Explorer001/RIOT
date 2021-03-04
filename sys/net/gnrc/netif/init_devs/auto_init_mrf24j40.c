@@ -17,12 +17,11 @@
  * @author  Neo Nenaco <neo@nenaco.de>
  */
 
-#ifdef MODULE_MRF24J40
-
 #include "log.h"
 #include "board.h"
 #include "net/gnrc/netif/ieee802154.h"
 #include "net/gnrc.h"
+#include "include/init_devs.h"
 
 #include "mrf24j40.h"
 #include "mrf24j40_params.h"
@@ -31,7 +30,7 @@
  * @brief   Define stack parameters for the MAC layer thread
  * @{
  */
-#define MRF24J40_MAC_STACKSIZE     (THREAD_STACKSIZE_DEFAULT)
+#define MRF24J40_MAC_STACKSIZE     (IEEE802154_STACKSIZE_DEFAULT)
 #ifndef MRF24J40_MAC_PRIO
 #define MRF24J40_MAC_PRIO          (GNRC_NETIF_PRIO)
 #endif
@@ -48,15 +47,11 @@ void auto_init_mrf24j40(void)
     for (unsigned i = 0; i < MRF24J40_NUM; i++) {
         LOG_DEBUG("[auto_init_netif] initializing mrf24j40 #%u\n", i);
 
-        mrf24j40_setup(&mrf24j40_devs[i], &mrf24j40_params[i]);
+        mrf24j40_setup(&mrf24j40_devs[i], &mrf24j40_params[i], i);
         gnrc_netif_ieee802154_create(&_netif[i], _mrf24j40_stacks[i],
                                      MRF24J40_MAC_STACKSIZE, MRF24J40_MAC_PRIO,
                                      "mrf24j40",
                                      (netdev_t *)&mrf24j40_devs[i]);
     }
 }
-#else
-typedef int dont_be_pedantic;
-#endif /* MODULE_MRF24J40 */
-
 /** @} */

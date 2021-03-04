@@ -175,7 +175,7 @@ int _sht_config_handler(int argc, char **argv)
     int dev_num = 0;
 
     if ((argc == 2) && (strcmp("--help", argv[1]) == 0)) {
-        printf("Usage: \"%s [PARMS]\n"
+        printf("Usage: \"%s [PARAMS]\n"
                "\n"
                "Supported parameters:\n"
                "  -d <NUM>\n"
@@ -189,7 +189,7 @@ int _sht_config_handler(int argc, char **argv)
                "\n"
                "  -r l/h\n"
                "    Set resolution to low/high. Low resolution trades "
-               "presicion for speed\n"
+               "precision for speed\n"
                "\n"
                "  -H y/n\n"
                "    Turns heater on/off. Can increase temperature by up to "

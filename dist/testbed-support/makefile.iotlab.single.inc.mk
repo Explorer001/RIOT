@@ -6,7 +6,7 @@
 #  * reset
 #  * term
 #
-# Tested on m3/a8-m3/wsn430/samr21/arduino-zero nodes
+# Tested on m3/a8-m3/samr21/arduino-zero nodes
 #
 # It can be run:
 # * From your computer by setting IOTLAB_NODE to the full url like
@@ -65,6 +65,7 @@ IOTLAB_NODE_AUTO_NUM ?= 1
 IOTLAB_ARCHI_arduino-zero   = arduino-zero:xbee
 IOTLAB_ARCHI_b-l072z-lrwan1 = st-lrwan1:sx1276
 IOTLAB_ARCHI_b-l475e-iot01a = st-iotnode:multi
+IOTLAB_ARCHI_dwm1001        = dwm1001:dw1000
 IOTLAB_ARCHI_firefly        = firefly:multi
 IOTLAB_ARCHI_frdm-kw41z     = frdm-kw41z:multi
 IOTLAB_ARCHI_iotlab-a8-m3   = a8:at86rf231
@@ -78,8 +79,7 @@ IOTLAB_ARCHI_nrf52840-mdk   = nrf52840mdk:multi
 IOTLAB_ARCHI_pba-d-01-kw2x  = phynode:kw2xrf
 IOTLAB_ARCHI_samr21-xpro    = samr21:at86rf233
 IOTLAB_ARCHI_samr30-xpro    = samr30:at86rf212b
-IOTLAB_ARCHI_wsn430-v1_3b   = wsn430:cc1101
-IOTLAB_ARCHI_wsn430-v1_4    = wsn430:cc2420
+IOTLAB_ARCHI_zigduino       = zigduino:atmega128rfa1
 IOTLAB_ARCHI := $(IOTLAB_ARCHI_$(BOARD))
 
 # There are several deprecated and incompatible features used here that were
@@ -94,8 +94,8 @@ else
   _NODES_DEPLOYED = $(shell iotlab-experiment --jmespath='"0"' --format='" ".join' get $(_IOTLAB_EXP_ID) --deployment)
   _NODES_LIST_OPTION = --nodes
   _NODES_FLASH_OPTION = --flash
-  ifneq (,$(filter-out wsn430-% firefly,$(BOARD)))
-    # All boards in IoT-LAB except firefly and WSN430 can be flashed using $(BINFILE).
+  ifeq (,$(filter firefly zigduino,$(BOARD)))
+    # All boards in IoT-LAB except firefly can be flashed using $(BINFILE).
     # On IoT-LAB, firefly only accepts $(ELFFILE) and WSN320 boards on accept $(HEXFILE).
     # Using $(BINFILE) speeds up the firmware upload since the file is much
     # smaller than an elffile.
@@ -172,17 +172,14 @@ info-iotlab-node:
 
 # Configure FLASHER, RESET, TERMPROG depending on BOARD and if on frontend
 
-# Command to check if 'stdin' is 0. Cannot use 'cmp - <(echo 0)' without bash shell
-_STDIN_EQ_0 = grep 0
-
 ifneq (iotlab-a8-m3,$(BOARD))
 
-  # M3 and wsn430 nodes
+  # M3 nodes
   FLASHER     = iotlab-node
   RESET       = iotlab-node
-  _NODE_FMT   = --jmespath='keys(@)[0]' --format='int'
-  FFLAGS      = $(_NODE_FMT) $(_IOTLAB_EXP_ID) $(_IOTLAB_NODELIST) $(_NODES_FLASH_OPTION) $(FLASHFILE) | $(_STDIN_EQ_0)
-  RESET_FLAGS = $(_NODE_FMT) $(_IOTLAB_EXP_ID) $(_IOTLAB_NODELIST) --reset | $(_STDIN_EQ_0)
+  _NODE_FMT   = --jmespath='keys(@)[0]' --format='lambda ret: exit(int(ret))'
+  FFLAGS      = $(_NODE_FMT) $(_IOTLAB_EXP_ID) $(_IOTLAB_NODELIST) $(_NODES_FLASH_OPTION) $(FLASHFILE)
+  RESET_FLAGS = $(_NODE_FMT) $(_IOTLAB_EXP_ID) $(_IOTLAB_NODELIST) --reset
 
   ifeq (,$(_IOTLAB_ON_FRONTEND))
     TERMPROG  = ssh
@@ -198,8 +195,8 @@ else
   FLASHER     = iotlab-ssh
   RESET       = iotlab-ssh
   _NODE_FMT   = --jmespath='keys(values(@)[0])[0]' --fmt='int'
-  FFLAGS      = $(_NODE_FMT) $(_IOTLAB_EXP_ID) flash-m3 $(_IOTLAB_NODELIST) $(FLASHFILE) | $(_STDIN_EQ_0)
-  RESET_FLAGS = $(_NODE_FMT) $(_IOTLAB_EXP_ID) reset-m3 $(_IOTLAB_NODELIST) | $(_STDIN_EQ_0)
+  FFLAGS      = $(_NODE_FMT) $(_IOTLAB_EXP_ID) flash-m3 $(_IOTLAB_NODELIST) $(FLASHFILE)
+  RESET_FLAGS = $(_NODE_FMT) $(_IOTLAB_EXP_ID) reset-m3 $(_IOTLAB_NODELIST)
 
   TERMPROG  = ssh
   ifeq (,$(_IOTLAB_ON_FRONTEND))

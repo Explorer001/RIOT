@@ -37,7 +37,7 @@
 #include "utlist.h"
 #include "thread.h"
 
-#define ENABLE_DEBUG                (0)
+#define ENABLE_DEBUG                0
 #include "debug.h"
 
 #define LWIP_NETDEV_NAME            "lwip_netdev_mux"
@@ -48,6 +48,9 @@
 
 #define ETHERNET_IFNAME1 'E'
 #define ETHERNET_IFNAME2 'T'
+
+#define WPAN_IFNAME1 'W'
+#define WPAN_IFNAME2 'P'
 
 static kernel_pid_t _pid = KERNEL_PID_UNDEF;
 static char _stack[LWIP_NETDEV_STACKSIZE];
@@ -135,6 +138,8 @@ err_t lwip_netdev_init(struct netif *netif)
         {
             u16_t val;
             ip6_addr_t *addr;
+            netif->name[0] = WPAN_IFNAME1;
+            netif->name[1] = WPAN_IFNAME2;
             if (netdev->driver->get(netdev, NETOPT_NID, &val,
                                     sizeof(val)) < 0) {
                 return ERR_IF;

@@ -14,6 +14,7 @@
  * @author  Cenk Gündoğan <cenk.guendogan@haw-hamburg.de>
  */
 
+#include <assert.h>
 #include <string.h>
 
 #include "net/icmpv6.h"
@@ -26,10 +27,10 @@
 #include "net/gnrc/rpl/p2p_structs.h"
 #include "net/gnrc/rpl/p2p_dodag.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG                    0
 #include "debug.h"
 
-#if ENABLE_DEBUG
+#if IS_ACTIVE(ENABLE_DEBUG)
 static char addr_str[IPV6_ADDR_MAX_STR_LEN];
 #endif
 
@@ -87,7 +88,7 @@ gnrc_rpl_instance_t *gnrc_rpl_p2p_root_init(uint8_t instance_id, ipv6_addr_t *do
     instance->max_rank_inc = 0;
     dodag->dtsn = 0;
     dodag->prf = 0;
-    dodag->dio_interval_doubl = GNRC_RPL_DEFAULT_DIO_INTERVAL_DOUBLINGS;
+    dodag->dio_interval_doubl = CONFIG_GNRC_RPL_DEFAULT_DIO_INTERVAL_DOUBLINGS;
     dodag->dio_min = GNRC_RPL_P2P_DEFAULT_DIO_INTERVAL_MIN;
     dodag->dio_redun = GNRC_RPL_P2P_DEFAULT_DIO_REDUNDANCY_CONSTANT;
     dodag->default_lifetime = GNRC_RPL_P2P_DEFAULT_LIFETIME;

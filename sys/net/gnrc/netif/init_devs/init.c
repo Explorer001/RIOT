@@ -42,6 +42,11 @@ void gnrc_netif_init_devs(void)
         auto_init_at86rf2xx();
     }
 
+    if (IS_USED(MODULE_ATWINC15X0)) {
+        extern void auto_init_atwinc15x0(void);
+        auto_init_atwinc15x0();
+    }
+
     if (IS_USED(MODULE_MRF24J40)) {
         extern void auto_init_mrf24j40(void);
         auto_init_mrf24j40();
@@ -94,6 +99,11 @@ void gnrc_netif_init_devs(void)
         auto_init_dose();
     }
 
+    if (IS_USED(MODULE_SAM0_ETH)) {
+        extern void auto_init_sam0_eth(void);
+        auto_init_sam0_eth();
+    }
+
     if (IS_USED(MODULE_SLIPDEV)) {
         extern void auto_init_slipdev(void);
         auto_init_slipdev();
@@ -133,12 +143,10 @@ void gnrc_netif_init_devs(void)
         extern void auto_init_socket_zep(void);
         auto_init_socket_zep();
     }
-
-    if (IS_USED(MODULE_NORDIC_SOFTDEVICE_BLE)) {
-        extern void gnrc_nordic_ble_6lowpan_init(void);
-        gnrc_nordic_ble_6lowpan_init();
+    if (IS_USED(MODULE_NRF24L01P_NG)) {
+        extern void auto_init_nrf24l01p_ng(void);
+        auto_init_nrf24l01p_ng();
     }
-
     if (IS_USED(MODULE_NRFMIN)) {
         extern void gnrc_nrfmin_init(void);
         gnrc_nrfmin_init();

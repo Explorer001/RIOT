@@ -24,6 +24,7 @@
 #include "cpu.h"
 #include "mutex.h"
 #include "assert.h"
+#include "nrf_clock.h"
 
 #include "periph_conf.h"
 #include "periph/cpuid.h"
@@ -35,7 +36,7 @@
 #include "net/gnrc/nettype.h"
 #endif
 
-#define ENABLE_DEBUG            (0)
+#define ENABLE_DEBUG            0
 #include "debug.h"
 
 /**
@@ -185,14 +186,6 @@ void nrfmin_setup(void)
 uint16_t nrfmin_get_addr(void)
 {
     return my_addr;
-}
-
-void nrfmin_get_iid(uint16_t *iid)
-{
-    iid[0] = 0;
-    iid[1] = 0xff00;
-    iid[2] = 0x00fe;
-    iid[3] = my_addr;
 }
 
 uint16_t nrfmin_get_channel(void)
@@ -409,6 +402,11 @@ static int nrfmin_init(netdev_t *dev)
         my_addr ^= cpuid[i] << (8 * (i & 0x01));
     }
 
+    /* the radio need the external HF clock source to be enabled */
+    /* @todo    add proper handling to release the clock whenever the radio is
+     *          idle */
+    clock_hfxo_request();
+
     /* power on the NRFs radio */
     NRF_RADIO->POWER = 1;
     /* load driver specific configuration */
@@ -506,10 +504,6 @@ static int nrfmin_get(netdev_t *dev, netopt_t opt, void *val, size_t max_len)
             assert(max_len >= sizeof(uint16_t));
             *((uint16_t *)val) = NETDEV_TYPE_NRFMIN;
             return sizeof(uint16_t);
-        case NETOPT_IPV6_IID:
-            assert(max_len >= sizeof(uint64_t));
-            nrfmin_get_iid((uint16_t *)val);
-            return sizeof(uint64_t);
         default:
             return -ENOTSUP;
     }

@@ -38,15 +38,6 @@ extern "C" {
 #define NETOPT_MAX_PACKET_SIZE NETOPT_MAX_PDU_SIZE
 
 /**
- * @brief       A deprecated alias for @ref NETOPT_LINK
- *
- * @deprecated  Please use @ref NETOPT_LINK instead of
- *              `NETOPT_LINK_CONNECTED`. It will be removed after the
- *              2020.07 release at the latest.
- */
-#define NETOPT_LINK_CONNECTED NETOPT_LINK
-
-/**
  * @brief   Global list of configuration options available throughout the
  *          network stack, e.g. by netdev and netapi
  *
@@ -77,6 +68,7 @@ typedef enum {
      * Ethernet      | 6      | device MAC address
      * nrfmin        | 2      | device short address
      * CC110x        | 1      | device address
+     * NRF24L01+     | 5      | device address
      * LoRaWAN       | 4      | device address
      */
     NETOPT_ADDRESS,
@@ -120,10 +112,9 @@ typedef enum {
      *          RFC 4291, section 2.5.1
      *      </a>
      *
-     * @deprecated  Do not implement this in a network device. Other APIs
-     *              utilizing [netopt](@ref net_netopt) may still implement it.
-     *              Existing support of drivers will be dropped after the
-     *              2019.07 release.
+     * @note    Do not implement this in a network device driver. Other APIs
+     *          utilizing [netopt](@ref net_netopt) such as @ref net_gnrc_netif
+     *          or @ref net_netif may still implement it.
      *
      * The generation of the interface identifier is dependent on the link-layer.
      * Please refer to the appropriate IPv6 over `<link>` specification for
@@ -196,6 +187,22 @@ typedef enum {
      * @brief   (uint16_t) maximum protocol data unit
      */
     NETOPT_MAX_PDU_SIZE,
+    /**
+     * @brief   (uint16_t) protocol data unit size
+     *
+     * When set, fixes the number of bytes to be received. This is required for
+     * MAC layers with implicit header mode (no packet length information in
+     * PDDU) and predictable packet length (e.g LoRaWAN beacons). The device
+     * driver implementation should attempt to read exactly the expected number
+     * of bytes (possibly filling it up with garbage data if the payload is
+     * smaller).
+     *
+     * When get, returns the number of expected bytes for the next reception.
+     *
+     * In some MAC layers it will only be effective if used in conjunction with
+     * @ref NETOPT_FIXED_HEADER
+     */
+    NETOPT_PDU_SIZE,
     /**
      * @brief   (@ref netopt_enable_t) frame preloading
      *
@@ -657,7 +664,9 @@ typedef enum {
     NETOPT_IEEE802154_PHY,
 
     /**
-     * @brief   (uint8_t) legacy O-QPSK Rate Mode
+     * @brief   (uint8_t) legacy O-QPSK proprietary mode
+     *          Allows to select higher data rates than standard 250 kbit/s
+     *          Not compatible across vendors, only use with radios of the same type.
      */
     NETOPT_OQPSK_RATE,
 
@@ -670,6 +679,36 @@ typedef enum {
      * @brief   (uint8_t) MR-O-QPSK Rate Mode
      */
     NETOPT_MR_OQPSK_RATE,
+
+    /**
+     * @brief   (uint8_t) MR-OFDM PHY Option (Values: 1-4)
+     */
+    NETOPT_MR_OFDM_OPTION,
+
+    /**
+     * @brief   (uint8_t) MR-OFDM PHY Modulation and Coding Scheme (Values: 0-6)
+     */
+    NETOPT_MR_OFDM_MCS,
+
+    /**
+     * @brief   (uint8_t) MR-FSK PHY Modulation Index (x 64)
+     */
+    NETOPT_MR_FSK_MODULATION_INDEX,
+
+    /**
+     * @brief   (uint8_t) MR-FSK Modulation Order
+     */
+    NETOPT_MR_FSK_MODULATION_ORDER,
+
+    /**
+     * @brief   (uint8_t) MR-FSK PHY Symbol Rate (kHz)
+     */
+    NETOPT_MR_FSK_SRATE,
+
+    /**
+     * @brief   (uint8_t) MR-FSK PHY Forward Error Correction
+     */
+    NETOPT_MR_FSK_FEC,
 
     /**
      * @brief   (uint8_t) PHY Channel Spacing (kHz)
@@ -718,6 +757,42 @@ typedef enum {
      */
     NETOPT_LINK_CHECK,
 
+    /**
+     * @brief (int8_t) Received Signal Strength Indicator (RSSI)
+     *
+     * The RSSI is an indicator for the received field strength in wireless
+     * channels. It is often represented as the ratio of received power to
+     * a given unit, for example milliwatts. With a device-dependent scaling
+     * factor, the RSSI value can be expressed as power level in the unit
+     * dBm or ASU (Arbitrary Strength Unit).
+     */
+    NETOPT_RSSI,
+
+    /**
+     * @brief (uint16_t) Set the battery monitor voltage (in mV).
+     *
+     * When set, a @ref SYS_BUS_POWER_EVENT_LOW_VOLTAGE event is generated
+     * on the SYS_BUS_POWER bus if the supply voltage falls below the set value.
+     *
+     * Set to 0 to disable battery monitoring.
+     */
+    NETOPT_BATMON,
+
+    /**
+     * @brief   (array of byte array) get link layer multicast groups as array
+     *          of byte arrays (length of each byte array corresponds to the
+     *          length of @ref NETOPT_ADDRESS) or join a link layer multicast
+     *          group as byte array on an interface
+     *
+     * When getting the option you can pass an array of byte arrays of any
+     * length greater than 0 to the getter. The array will be filled up to to
+     * its maximum and the remaining addresses on the interface will be ignored
+     */
+    NETOPT_L2_GROUP,
+    /**
+     * @brief   (array of byte arrays) Leave an link layer multicast group
+     */
+    NETOPT_L2_GROUP_LEAVE,
     /**
      * @brief   maximum number of options defined here.
      *

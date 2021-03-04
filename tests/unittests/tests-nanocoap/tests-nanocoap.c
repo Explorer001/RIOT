@@ -59,6 +59,37 @@ static void test_nanocoap__hdr(void)
 }
 
 /*
+ * Validates encoded message ID byte order and put/get URI & Query option.
+ */
+static void test_nanocoap__hdr_2(void)
+{
+    uint8_t buf[_BUF_SIZE];
+    uint16_t msgid = 0xABCD;
+    char path[] = "/test/abcd/efgh?foo=bar&baz=blub";
+    unsigned char path_tmp[64] = {0};
+    unsigned char query_tmp[64] = {0};
+
+    uint8_t *pktpos = &buf[0];
+    uint16_t lastonum = 0;
+    pktpos += coap_build_hdr((coap_hdr_t *)pktpos, COAP_TYPE_CON, NULL, 0,
+                             COAP_METHOD_GET, msgid);
+    pktpos += coap_opt_put_uri_pathquery(pktpos, &lastonum, path);
+
+    coap_pkt_t pkt;
+    coap_parse(&pkt, &buf[0], pktpos - &buf[0]);
+
+    TEST_ASSERT_EQUAL_INT(msgid, coap_get_id(&pkt));
+
+    int res = coap_get_uri_path(&pkt, path_tmp);
+    TEST_ASSERT_EQUAL_INT(sizeof("/test/abcd/efgh"), res);
+    TEST_ASSERT_EQUAL_STRING("/test/abcd/efgh", (char *)path_tmp);
+
+    res = coap_get_uri_query(&pkt, query_tmp);
+    TEST_ASSERT_EQUAL_INT(sizeof("&foo=bar&baz=blub"), res);
+    TEST_ASSERT_EQUAL_STRING("&foo=bar&baz=blub", (char *)query_tmp);
+}
+
+/*
  * Client GET request with simple path. Test request generation.
  * Request /time resource from libcoap example
  */
@@ -746,7 +777,7 @@ static void test_nanocoap__empty(void)
 }
 
 /*
- * Test adding a path from an unterminated string
+ * Test adding a path from an unterminated string.
  */
 static void test_nanocoap__add_path_unterminated_string(void)
 {
@@ -774,10 +805,73 @@ static void test_nanocoap__add_path_unterminated_string(void)
     TEST_ASSERT_EQUAL_INT(0, strncmp(path, uri, path_len));
 }
 
+/*
+ * Test adding and retrieving the Proxy-URI option to and from a request.
+ */
+static void test_nanocoap__add_get_proxy_uri(void)
+{
+    uint8_t buf[_BUF_SIZE];
+    coap_pkt_t pkt;
+    uint16_t msgid = 0xABCD;
+    uint8_t token[2] = {0xDA, 0xEC};
+    char proxy_uri[60] = "coap://[2001:db8::1]:5683/.well-known/core";
+
+    size_t len = coap_build_hdr((coap_hdr_t *)&buf[0], COAP_TYPE_NON,
+                                &token[0], 2, COAP_METHOD_GET, msgid);
+
+    coap_pkt_init(&pkt, &buf[0], sizeof(buf), len);
+
+    len = coap_opt_add_proxy_uri(&pkt, proxy_uri);
+
+    /* strlen + 1 byte option number + 2 bytes length */
+    TEST_ASSERT_EQUAL_INT(strlen(proxy_uri) + 3, len);
+
+    char *uri;
+    len = coap_get_proxy_uri(&pkt, (char **) &uri);
+
+    TEST_ASSERT_EQUAL_INT(strlen(proxy_uri), len);
+    TEST_ASSERT_EQUAL_INT(0, strncmp((char *) proxy_uri, (char *) uri, len));
+}
+
+/*
+ * Verifies that coap_parse() recognizes token length bigger than allowed.
+ */
+static void test_nanocoap__token_length_over_limit(void)
+{
+    /* RFC7252 states that TKL must be within 0-8:
+     * "Lengths 9-15 are reserved, MUST NOT be sent,
+     * and MUST be processed as a message format error."
+     */
+    uint16_t msgid = 0xABCD;
+    uint8_t buf_invalid[] = {
+        0x49, 0x01, 0xAB, 0xCD,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99
+    };
+    uint8_t buf_valid[] = {
+        0x48, 0x01, 0xAB, 0xCD,
+        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
+    };
+    coap_pkt_t pkt;
+
+    /* Valid packet (TKL = 8) */
+    int res = coap_parse(&pkt, buf_valid, sizeof(buf_valid));
+
+    TEST_ASSERT_EQUAL_INT(0, res);
+    TEST_ASSERT_EQUAL_INT(1, coap_get_code_raw(&pkt));
+    TEST_ASSERT_EQUAL_INT(msgid, coap_get_id(&pkt));
+    TEST_ASSERT_EQUAL_INT(8, coap_get_token_len(&pkt));
+    TEST_ASSERT_EQUAL_INT(0, pkt.payload_len);
+
+    /* Invalid packet (TKL = 9) */
+    res = coap_parse(&pkt, buf_invalid, sizeof(buf_invalid));
+    TEST_ASSERT_EQUAL_INT(-EBADMSG, res);
+}
+
 Test *tests_nanocoap_tests(void)
 {
     EMB_UNIT_TESTFIXTURES(fixtures) {
         new_TestFixture(test_nanocoap__hdr),
+        new_TestFixture(test_nanocoap__hdr_2),
         new_TestFixture(test_nanocoap__get_req),
         new_TestFixture(test_nanocoap__put_req),
         new_TestFixture(test_nanocoap__get_multi_path),
@@ -799,6 +893,8 @@ Test *tests_nanocoap_tests(void)
         new_TestFixture(test_nanocoap__server_option_count_overflow),
         new_TestFixture(test_nanocoap__empty),
         new_TestFixture(test_nanocoap__add_path_unterminated_string),
+        new_TestFixture(test_nanocoap__add_get_proxy_uri),
+        new_TestFixture(test_nanocoap__token_length_over_limit),
     };
 
     EMB_UNIT_TESTCALLER(nanocoap_tests, NULL, NULL, fixtures);

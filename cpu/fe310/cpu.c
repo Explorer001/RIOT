@@ -21,8 +21,9 @@
 #include "periph/init.h"
 #include "periph_conf.h"
 
-#include "vendor/encoding.h"
-#include "vendor/plic_driver.h"
+#include "vendor/riscv_csr.h"
+
+#include "stdio_uart.h"
 
 /*
  * Configure the memory mapped flash for faster throughput
@@ -81,6 +82,7 @@ void flash_init(void)
      */
     uint32_t freq = cpu_freq();
     uint32_t sckdiv = (freq - 1) / (MAX_FLASH_FREQ * 2);
+
     if (sckdiv > SCKDIV_SAFE) {
         SPI0_REG(SPI_REG_SCKDIV) = sckdiv;
     }
@@ -92,7 +94,7 @@ void flash_init(void)
 void cpu_init(void)
 {
     /* Initialize clock */
-    clock_init();
+    fe310_clock_init();
 
 #if USE_CLOCK_HFROSC_PLL
     /* Initialize flash memory, only when using the PLL: in this
@@ -101,17 +103,11 @@ void cpu_init(void)
     flash_init();
 #endif
 
-    /* Enable FPU if present */
-    if (read_csr(misa) & (1 << ('F' - 'A'))) {
-        write_csr(mstatus, MSTATUS_FS); /* allow FPU instructions without trapping */
-        write_csr(fcsr, 0);             /* initialize rounding mode, undefined at reset */
-    }
+    /* Common RISC-V initialization */
+    riscv_init();
 
-    /* Initialize IRQs */
-    irq_init();
-
-    /* Initialize newlib-nano library stubs */
-    nanostubs_init();
+    /* Initialize stdio */
+    stdio_init();
 
     /* Initialize static peripheral */
     periph_init();

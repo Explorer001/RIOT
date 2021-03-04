@@ -49,7 +49,7 @@ int at86rf215_hardware_reset(at86rf215_t *dev)
 
     /* trigger hardware reset */
     gpio_clear(dev->params.reset_pin);
-    xtimer_usleep(AT86RF215_RESET_PULSE_WIDTH_US);
+    xtimer_usleep(CONFIG_AT86RF215_RESET_PULSE_WIDTH_US);
     gpio_set(dev->params.reset_pin);
     xtimer_usleep(AT86RF215_RESET_DELAY_US);
 
@@ -67,6 +67,11 @@ int at86rf215_hardware_reset(at86rf215_t *dev)
     /* no device connected */
     if (!tries) {
         return -ENODEV;
+    }
+
+    /* enable battery monitor */
+    if (IS_ACTIVE(MODULE_AT86RF215_BATMON)) {
+        at86rf215_enable_batmon(dev, CONFIG_AT86RF215_BATMON_THRESHOLD);
     }
 
     /* clear interrupts */

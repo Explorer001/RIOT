@@ -11,14 +11,12 @@
  * @{
  *
  * @file
- * @brief       Auto initialization for HTS221 devices
+ * @brief       Auto initialization for INA3221 devices
  *
  * @author      Fabian Hüßler <fabian.huessler@ovgu.de>
  *
  * @}
  */
-
-#ifdef MODULE_INA3221
 
 #include "assert.h"
 #include "log.h"
@@ -60,6 +58,3 @@ void auto_init_ina3221(void)
         }
     }
 }
-#else
-typedef int dont_be_pedantic;
-#endif /* MODULE_INA3221 */

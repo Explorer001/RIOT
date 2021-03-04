@@ -297,7 +297,7 @@ static inline unsigned coap_get_code_class(coap_pkt_t *pkt)
  *
  * @returns     message code detail
  */
-static inline unsigned coap_get_code_detail(coap_pkt_t *pkt)
+static inline unsigned coap_get_code_detail(const coap_pkt_t *pkt)
 {
     return pkt->hdr->code & 0x1f;
 }
@@ -616,6 +616,22 @@ ssize_t coap_opt_get_next(const coap_pkt_t *pkt, coap_optpos_t *opt,
 ssize_t coap_opt_get_opaque(const coap_pkt_t *pkt, unsigned opt_num, uint8_t **value);
 /**@}*/
 
+/**
+ * @brief   Convenience function for getting the packet's Proxy-Uri option
+ *
+ * @param[in]   pkt     pkt to work on
+ * @param[out]  target  pointer to the PROXY_URI in @p pkt
+ *
+ * @pre     ((pkt != NULL) && (target != NULL))
+ *
+ * @return      length of the Proxy-Uri option
+ * @return      -ENOENT if Proxy-Uri option not found
+ * @return      -EINVAL if Proxy-Uri option cannot be parsed
+ */
+static inline ssize_t coap_get_proxy_uri(const coap_pkt_t *pkt, char **target)
+{
+    return coap_opt_get_opaque(pkt, COAP_OPT_PROXY_URI, (uint8_t **)target);
+}
 
 /**
  * @name    Functions -- Options for Block
@@ -1253,12 +1269,32 @@ static inline size_t coap_opt_put_block2_control(uint8_t *buf, uint16_t lastonum
  *                          or 0 if first option
  * @param[in]   optnum      option number to use
  * @param[in]   string      string to encode as option
+ * @param[in]   len         length of the string
  * @param[in]   separator   character used in @p string to separate parts
  *
  * @return      number of bytes written to @p buf
  */
-size_t coap_opt_put_string(uint8_t *buf, uint16_t lastonum, uint16_t optnum,
-                           const char *string, char separator);
+size_t coap_opt_put_string_with_len(uint8_t *buf, uint16_t lastonum, uint16_t optnum,
+                                    const char *string, size_t len, char separator);
+/**
+ * @brief   Encode the given string as multi-part option into buffer
+ *
+ * @param[out]  buf         buffer to write to
+ * @param[in]   lastonum    number of previous option (for delta calculation),
+ *                          or 0 if first option
+ * @param[in]   optnum      option number to use
+ * @param[in]   string      string to encode as option
+ * @param[in]   separator   character used in @p string to separate parts
+ *
+ * @return      number of bytes written to @p buf
+ */
+static inline size_t coap_opt_put_string(uint8_t *buf, uint16_t lastonum,
+                                         uint16_t optnum,
+                                         const char *string, char separator)
+{
+    return coap_opt_put_string_with_len(buf, lastonum, optnum,
+                                        string, strlen(string), separator);
+}
 
 /**
  * @brief   Convenience function for inserting LOCATION_PATH option into buffer
@@ -1327,6 +1363,25 @@ static inline size_t coap_opt_put_uri_query(uint8_t *buf, uint16_t lastonum,
 {
     return coap_opt_put_string(buf, lastonum, COAP_OPT_URI_QUERY, uri, '&');
 }
+
+/**
+ * @brief   Convenience function for inserting URI_PATH and URI_QUERY into buffer
+ *          This function will automatically split path and query parameters.
+ *
+ * @param[out]  buf         buffer to write to
+ * @param[in,out] lastonum  number of previous option (for delta calculation),
+ *                          or 0 if first option
+ * @param[in]   uri         ptr into a source URI, to the first character after
+ *                          the authority component
+ *
+ * @returns     amount of bytes written to @p buf
+ *
+ * This function may produce two different options (Uri-Path and Uri-Query).
+ * Users that need to insert Content-Format, Max-Age or the currently
+ * unassigned option 13 need to split their URI themselves and call the
+ * respective helper functions.
+ */
+size_t coap_opt_put_uri_pathquery(uint8_t *buf, uint16_t *lastonum, const char *uri);
 
 /**
  * @brief   Convenience function for inserting PROXY_URI option into buffer

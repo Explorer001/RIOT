@@ -20,12 +20,11 @@
  * @author  Sebastian Meiling <s@mlng.net>
  */
 
-#ifdef MODULE_KW2XRF
-
 #include "log.h"
 #include "board.h"
 #include "net/gnrc/netif/ieee802154.h"
 #include "net/gnrc.h"
+#include "include/init_devs.h"
 
 #include "kw2xrf.h"
 #include "kw2xrf_params.h"
@@ -34,7 +33,7 @@
  * @brief   Define stack parameters for the MAC layer thread
  * @{
  */
-#define KW2XRF_MAC_STACKSIZE     (THREAD_STACKSIZE_DEFAULT)
+#define KW2XRF_MAC_STACKSIZE     (IEEE802154_STACKSIZE_DEFAULT)
 #ifndef KW2XRF_MAC_PRIO
 #define KW2XRF_MAC_PRIO          (GNRC_NETIF_PRIO)
 #endif
@@ -58,8 +57,4 @@ void auto_init_kw2xrf(void)
                                      (netdev_t *)&kw2xrf_devs[i]);
     }
 }
-#else
-typedef int dont_be_pedantic;
-#endif /* MODULE_KW2XRF */
-
 /** @} */

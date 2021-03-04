@@ -1,4 +1,4 @@
-CPU = stm32f1
+CPU = stm32
 CPU_MODEL = stm32f103re
 
 # Put defined MCU peripherals here (in alphabetical order)
@@ -11,3 +11,6 @@ FEATURES_PROVIDED += periph_uart
 
 # Put other features for this board (in alphabetical order)
 FEATURES_PROVIDED += riotboot
+
+# iotlab boards provide a custom default Kconfig clock configuration
+KCONFIG_ADD_CONFIG += $(RIOTBOARD)/common/iotlab/clock.config

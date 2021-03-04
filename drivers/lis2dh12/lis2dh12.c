@@ -22,7 +22,7 @@
 #include "lis2dh12.h"
 #include "lis2dh12_internal.h"
 
-#define ENABLE_DEBUG        (0)
+#define ENABLE_DEBUG        0
 #include "debug.h"
 
 /* the following block contains the SPI mode specific adaption */
@@ -30,11 +30,11 @@
 
 /* SPI bus speed and mode */
 #define BUS_CLK             SPI_CLK_5MHZ
-#define MODE                SPI_MODE_0
+#define BUS_MODE            SPI_MODE_0
 #define BUS_OK              SPI_OK
 /* shortcuts for SPI bus parameters */
 #define BUS                 (dev->p->spi)
-#define CS                  (dev->p->cs)
+#define BUS_CS              (dev->p->cs)
 /* flag to set when reading from the device */
 #define FLAG_READ           (0x80)
 /* flag to enable address auto incrementation on read or write */
@@ -43,7 +43,7 @@
 static int _init_bus(const lis2dh12_t *dev)
 {
     /* for SPI, we only need to initialize the chip select pin */
-    if (spi_init_cs(BUS, CS) != SPI_OK) {
+    if (spi_init_cs(BUS, BUS_CS) != SPI_OK) {
         return LIS2DH12_NOBUS;
     }
     return LIS2DH12_OK;
@@ -51,7 +51,7 @@ static int _init_bus(const lis2dh12_t *dev)
 
 static int _acquire(const lis2dh12_t *dev)
 {
-    return spi_acquire(BUS, CS, MODE, BUS_CLK);
+    return spi_acquire(BUS, BUS_CS, BUS_MODE, BUS_CLK);
 }
 
 static void _release(const lis2dh12_t *dev)
@@ -61,19 +61,19 @@ static void _release(const lis2dh12_t *dev)
 
 static uint8_t _read(const lis2dh12_t *dev, uint8_t reg)
 {
-    return spi_transfer_reg(BUS, CS, (FLAG_READ | reg), 0);
+    return spi_transfer_reg(BUS, BUS_CS, (FLAG_READ | reg), 0);
 }
 
-static void _read_burst(const lis2dh12_t *dev, uint8_t reg,
-                              void *data, size_t len)
-{
-    spi_transfer_regs(BUS, CS, (FLAG_READ | FLAG_AINC | reg), NULL, data, len);
+static void _read_burst(const lis2dh12_t *dev, uint8_t reg, void *data,
+                        size_t len) {
+    spi_transfer_regs(BUS, BUS_CS, (FLAG_READ | FLAG_AINC | reg), NULL, data,
+                      len);
 }
 
 static void _write(const lis2dh12_t *dev, uint8_t reg, uint8_t data)
 {
     DEBUG("[lis2dh12] write: reg 0x%02x, val 0x%02x\n", (int)reg, (int)data);
-    spi_transfer_reg(BUS, CS, reg, data);
+    spi_transfer_reg(BUS, BUS_CS, reg, data);
 }
 
 /* and now the I2C specific part of the driver */
@@ -210,7 +210,7 @@ int lis2dh12_set_int(const lis2dh12_t *dev, const lis2dh12_int_params_t *params,
         /* first interrupt line (INT1) */
         case LIS2DH12_INT1:
             pin = dev->p->int1_pin;
-            assert (pin != GPIO_UNDEF);
+            assert (gpio_is_valid(pin));
 
             if (gpio_init_int(pin, GPIO_IN, GPIO_RISING, params->cb, params->arg)) {
                 return LIS2DH12_NOINT;
@@ -224,7 +224,7 @@ int lis2dh12_set_int(const lis2dh12_t *dev, const lis2dh12_int_params_t *params,
         /* second interrupt line (INT2) */
         case LIS2DH12_INT2:
             pin = dev->p->int2_pin;
-            assert (pin != GPIO_UNDEF);
+            assert (gpio_is_valid(pin));
 
             if (gpio_init_int(pin, GPIO_IN, GPIO_RISING, params->cb, params->arg)) {
                 return LIS2DH12_NOINT;

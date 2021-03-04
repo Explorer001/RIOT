@@ -22,21 +22,21 @@ sudo apt-get install libsocketcan-dev
 
 Alternatively, you can compile from source:
 ```
-wget http://www.pengutronix.de/software/libsocketcan/download/libsocketcan-0.0.10.tar.bz2
+wget http://www.pengutronix.de/software/libsocketcan/download/libsocketcan-0.0.11.tar.bz2
 
-$ sudo tar xvjf libsocketcan-0.0.10.tar.bz2
+$ tar xvjf libsocketcan-0.0.11.tar.bz2
 
-$ sudo rm -rf libsocketcan-0.0.10.tar.bz2
+$ rm -rf libsocketcan-0.0.11.tar.bz2
 
-$ sudo cd libsocketcan-0.0.10
+$ cd libsocketcan-0.0.11
 
-$ sudo ./configure
+$ ./configure
 
 compile in 32bits
 
 ./configure --build=i686-pc-linux-gnu "CFLAGS=-m32" "CXXFLAG
 
-$ sudo make
+$ make
 
 $ sudo make install
 
@@ -59,12 +59,24 @@ sudo ip link set vcan1 up
 Usage
 =====
 
+Adapt pin configuration in Makefile to match the used CAN transceiver (e.g. TJA1042_STB_PIN)
+
 Build, flash and start the application:
 ```
 export BOARD=your_board
 make
 make flash
 make term
+```
+
+To initialize a CAN transceiver device (trx_id = 0)
+```
+init 0
+```
+
+To set a CAN transceiver device's (trx_id = 0) mode to TRX_NORMAL_MODE
+```
+set_mode 0 0
 ```
 
 The CAN interfaces are registered at startup to the dll. The list of registered

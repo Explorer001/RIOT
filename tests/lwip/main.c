@@ -32,31 +32,6 @@
 #endif
 #include "shell.h"
 
-static int ifconfig(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    for (struct netif *iface = netif_list; iface != NULL; iface = iface->next) {
-        printf("%s_%02u: ", iface->name, iface->num);
-#ifdef MODULE_LWIP_IPV6
-        char addrstr[IPV6_ADDR_MAX_STR_LEN];
-        for (int i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-            if (!ipv6_addr_is_unspecified((ipv6_addr_t *)&iface->ip6_addr[i])) {
-                printf(" inet6 %s\n", ipv6_addr_to_str(addrstr, (ipv6_addr_t *)&iface->ip6_addr[i],
-                                                       sizeof(addrstr)));
-            }
-        }
-#endif
-#ifdef MODULE_LWIP_IPV4
-        char addrstr[IPV4_ADDR_MAX_STR_LEN];
-        printf(" inet %s\n", ipv4_addr_to_str(addrstr, (ipv4_addr_t *)&iface->ip_addr,
-                                              sizeof(addrstr)));
-#endif
-        puts("");
-    }
-    return 0;
-}
-
 static const shell_command_t shell_commands[] = {
 #ifdef MODULE_SOCK_IP
     { "ip", "Send IP packets and listen for packets of certain type", ip_cmd },
@@ -67,7 +42,6 @@ static const shell_command_t shell_commands[] = {
 #ifdef MODULE_SOCK_UDP
     { "udp", "Send UDP messages and listen for messages on UDP port", udp_cmd },
 #endif
-    { "ifconfig", "Shows assigned IPv6 addresses", ifconfig },
     { NULL, NULL, NULL }
 };
 

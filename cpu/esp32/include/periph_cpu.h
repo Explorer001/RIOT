@@ -498,7 +498,7 @@ typedef struct {
 
 
 /**
- * @name   Timer configuration depenend on which implementation is used
+ * @name   Timer configuration depending on which implementation is used
  *
  * Timers are MCU built-in feature and not board-specific. They are therefore
  * configured here.
@@ -506,12 +506,12 @@ typedef struct {
  */
 #ifdef MODULE_ESP_HW_COUNTER
 /** hardware ccount/ccompare registers are used for timer implementation */
-#define TIMER_NUMOF     (2)
-#define TIMER_CHANNELS  (1)
+#define TIMER_NUMOF         (2)
+#define TIMER_CHANNEL_NUMOF (1)
 #else
 /** hardware timer modules are used for timer implementation (default) */
-#define TIMER_NUMOF     (3)
-#define TIMER_CHANNELS  (1)
+#define TIMER_NUMOF         (3)
+#define TIMER_CHANNEL_NUMOF (1)
 #endif
 
 /** Timer used for system time */
@@ -562,6 +562,10 @@ typedef struct {
  */
 #define UART_NUMOF_MAX  (3)
 /** @} */
+
+#ifdef MODULE_PERIPH_CAN
+#include "can_esp.h"
+#endif
 
 #ifdef __cplusplus
 }

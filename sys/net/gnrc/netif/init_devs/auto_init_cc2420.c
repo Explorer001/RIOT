@@ -19,12 +19,11 @@
  * @author      Francisco Acosta <francisco.acosta@inria.fr>
  */
 
-#ifdef MODULE_CC2420
-
 #include "log.h"
 #include "board.h"
 #include "net/gnrc/netif/ieee802154.h"
 #include "net/gnrc.h"
+#include "include/init_devs.h"
 
 #include "cc2420.h"
 #include "cc2420_params.h"
@@ -33,7 +32,7 @@
  * @brief   MAC layer stack parameters
  * @{
  */
-#define CC2420_MAC_STACKSIZE           (THREAD_STACKSIZE_MAIN)
+#define CC2420_MAC_STACKSIZE           (IEEE802154_STACKSIZE_DEFAULT)
 #ifndef CC2420_MAC_PRIO
 #define CC2420_MAC_PRIO                (GNRC_NETIF_PRIO)
 #endif
@@ -64,9 +63,4 @@ void auto_init_cc2420(void)
                                      (netdev_t *)&cc2420_devs[i]);
     }
 }
-
-#else
-typedef int dont_be_pedantic;
-#endif /* MODULE_CC2420 */
-
 /** @} */

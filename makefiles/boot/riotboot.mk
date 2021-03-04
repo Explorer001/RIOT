@@ -59,7 +59,7 @@ $(HEADER_TOOL): FORCE
 	@echo "compiling $@..."
 	$(Q)/usr/bin/env -i \
 		QUIET=$(QUIET) \
-		PATH=$(PATH) \
+		PATH="$(PATH)" \
 			$(MAKE) --no-print-directory -C $(HEADER_TOOL_DIR) all
 
 # Generate RIOT header and keep the original binary file
@@ -76,11 +76,12 @@ riotboot: $(SLOT_RIOT_BINS)
 
 # riotboot bootloader compile target
 riotboot/flash-bootloader: riotboot/bootloader/flash
-riotboot/bootloader/%:
+riotboot/bootloader/%: $(BUILDDEPS)
 	$(Q)/usr/bin/env -i \
-		QUIET=$(QUIET) PATH=$(PATH)\
+		QUIET=$(QUIET) PATH="$(PATH)"\
 		EXTERNAL_BOARD_DIRS="$(EXTERNAL_BOARD_DIRS)" BOARD=$(BOARD)\
-		DEBUG_ADAPTER_ID=$(DEBUG_ADAPTER_ID)\
+		DEBUG_ADAPTER_ID=$(DEBUG_ADAPTER_ID) \
+		PROGRAMMER=$(PROGRAMMER) PROGRAMMER_QUIET=$(PROGRAMMER_QUIET) \
 			$(MAKE) --no-print-directory -C $(RIOTBOOT_DIR) $*
 
 # Generate a binary file from the bootloader which fills all the

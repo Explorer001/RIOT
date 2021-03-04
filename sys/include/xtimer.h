@@ -36,14 +36,15 @@
 #include "msg.h"
 #endif /* MODULE_CORE_MSG */
 #include "mutex.h"
-#include "kernel_types.h"
+#include "sched.h"
+#include "rmutex.h"
 
 #ifdef MODULE_ZTIMER_XTIMER_COMPAT
 #include "ztimer/xtimer_compat.h"
 #else
 
-#ifndef MODULE_XTIMER_ON_ZTIMER
 #include "board.h"
+#ifndef MODULE_XTIMER_ON_ZTIMER
 #include "periph_conf.h"
 #endif
 
@@ -146,11 +147,18 @@ void xtimer_init(void);
 static inline void xtimer_sleep(uint32_t seconds);
 
 /**
+ * @brief Pause the execution of a thread for some milliseconds
+ *
+ * @param[in] milliseconds  the amount of milliseconds the thread should sleep
+ */
+static inline void xtimer_msleep(uint32_t milliseconds);
+
+/**
  * @brief Pause the execution of a thread for some microseconds
  *
  * When called from an ISR, this function will spin and thus block the MCU for
  * the specified amount in microseconds, so only use it there for *very* short
- * periods, e.g., less than XTIMER_BACKOFF.
+ * periods, e.g., less than XTIMER_BACKOFF converted to µs.
  *
  * @param[in] microseconds  the amount of microseconds the thread should sleep
  */
@@ -261,8 +269,8 @@ static inline void xtimer_set_wakeup64(xtimer_t *timer, uint64_t offset, kernel_
  * ticks in the future.
  *
  * @warning BEWARE! Callbacks from xtimer_set() are being executed in interrupt
- * context (unless offset < XTIMER_BACKOFF). DON'T USE THIS FUNCTION unless you
- * know *exactly* what that means.
+ * context (unless offset < XTIMER_BACKOFF converted to µs).
+ * DON'T USE THIS FUNCTION unless you know *exactly* what that means.
  *
  * @param[in] timer     the timer structure to use.
  * @param[in] offset    time in microseconds from now specifying that timer's
@@ -280,8 +288,8 @@ static inline void xtimer_set(xtimer_t *timer, uint32_t offset);
  * microseconds in the future.
  *
  * @warning BEWARE! Callbacks from xtimer_set() are being executed in interrupt
- * context (unless offset < XTIMER_BACKOFF). DON'T USE THIS FUNCTION unless you
- * know *exactly* what that means.
+ * context (unless offset < XTIMER_BACKOFF converted to µs).
+ * DON'T USE THIS FUNCTION unless you know *exactly* what that means.
  *
  * @param[in] timer       the timer structure to use.
  * @param[in] offset_us   time in microseconds from now specifying that timer's
@@ -409,11 +417,23 @@ static inline bool xtimer_less64(xtimer_ticks64_t a, xtimer_ticks64_t b);
  * @param[in]    us     timeout in microseconds relative
  *
  * @return       0, when returned after mutex was locked
- * @return       -1, when the timeout occcured
+ * @return       -1, when the timeout occurred
  */
 int xtimer_mutex_lock_timeout(mutex_t *mutex, uint64_t us);
 
+/**
+ * @brief lock a rmutex but with timeout
+ *
+ * @param[in]    rmutex  rmutex to lock
+ * @param[in]    us     timeout in microseconds relative
+ *
+ * @return       0, when returned after rmutex was locked
+ * @return       -1, when the timeout occurred
+ */
+int xtimer_rmutex_lock_timeout(rmutex_t *rmutex, uint64_t us);
+
 #if defined(MODULE_CORE_THREAD_FLAGS) || defined(DOXYGEN)
+
 /**
  * @brief    Set timeout thread flag after @p timeout
  *
@@ -505,7 +525,7 @@ static inline int xtimer_msg_receive_timeout64(msg_t *msg, uint64_t timeout);
 /**
  * @brief xtimer backoff value
  *
- * All timers that are less than XTIMER_BACKOFF microseconds in the future will
+ * All timers that are less than XTIMER_BACKOFF ticks in the future will
  * just spin.
  *
  * This is supposed to be defined per-device in e.g., periph_conf.h.
@@ -577,14 +597,14 @@ static inline int xtimer_msg_receive_timeout64(msg_t *msg, uint64_t timeout);
  */
 #define XTIMER_HZ_BASE (1000000ul)
 
-#ifndef XTIMER_HZ
+#if !defined(XTIMER_HZ) && !defined(MODULE_XTIMER_ON_ZTIMER)
 /**
  * @brief  Frequency of the underlying hardware timer
  */
 #define XTIMER_HZ XTIMER_HZ_BASE
 #endif
 
-#ifndef XTIMER_SHIFT
+#if !defined(XTIMER_SHIFT) && !defined(MODULE_XTIMER_ON_ZTIMER)
 #if (XTIMER_HZ == 32768ul)
 /* No shift necessary, the conversion is not a power of two and is handled by
  * functions in tick_conversion.h */
@@ -621,7 +641,7 @@ static inline int xtimer_msg_receive_timeout64(msg_t *msg, uint64_t timeout);
 #else
 #error "XTIMER_SHIFT cannot be derived for given XTIMER_HZ, verify settings!"
 #endif
-#else
+#elif !defined(MODULE_XTIMER_ON_ZTIMER)
 #error "XTIMER_SHIFT is set relative to XTIMER_HZ, no manual define required!"
 #endif
 
@@ -633,7 +653,7 @@ static inline int xtimer_msg_receive_timeout64(msg_t *msg, uint64_t timeout);
 }
 #endif
 
-#endif /* MODULE_XTIMER_ON_ZTIMER */
+#endif /* MODULE_ZTIMER_XTIMER_COMPAT */
 
 /** @} */
 #endif /* XTIMER_H */

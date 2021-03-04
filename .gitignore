@@ -1,5 +1,7 @@
 # Object files
 *.o
+# Target files
+*.elf
 # Documentation artifacts
 doc/doxygen/html
 doc/doxygen/latex
@@ -16,6 +18,8 @@ fuzzing/**/findings/
 # Backup files
 *~
 *.orig
+.*.swn
+.*.swo
 .*.swp
 \#*\#
 cachegrind.out*

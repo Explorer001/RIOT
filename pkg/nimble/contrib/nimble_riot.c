@@ -18,6 +18,8 @@
  * @}
  */
 
+#include <assert.h>
+
 #include "thread.h"
 #include "nimble_riot.h"
 
@@ -33,6 +35,10 @@
 #endif
 #ifdef MODULE_NIMBLE_SVC_IPSS
 #include "services/ipss/ble_svc_ipss.h"
+#endif
+
+#ifdef MODULE_NIMBLE_STATCONN
+#include "nimble_statconn.h"
 #endif
 
 #if defined(MODULE_NIMBLE_AUTOCONN) && !defined(MODULE_NIMBLE_AUTOCONN_NOAUTOINIT)
@@ -127,6 +133,10 @@ void nimble_riot_init(void)
     ble_svc_ipss_init();
 #endif
 
+#ifdef MODULE_NIMBLE_STATCONN
+    nimble_statconn_init();
+#endif
+
 #if defined(MODULE_NIMBLE_AUTOCONN) && !defined(MODULE_NIMBLE_AUTOCONN_NOAUTOINIT)
     ble_gatts_start();
     /* CAUTION: this must be called after nimble_netif_init() and also only
@@ -134,5 +144,10 @@ void nimble_riot_init(void)
     res = nimble_autoconn_init(&nimble_autoconn_params, NULL, 0);
     assert(res == NIMBLE_AUTOCONN_OK);
     nimble_autoconn_enable();
+#endif
+
+#ifdef MODULE_NIMBLE_AUTOADV
+    extern void nimble_autoadv_init(void);
+    nimble_autoadv_init();
 #endif
 }

@@ -1,5 +1,6 @@
 # Target triple for the build.
-TARGET_ARCH ?= mips-mti-elf
+TARGET_ARCH_MIPS ?= mips-mti-elf
+TARGET_ARCH ?= $(TARGET_ARCH_MIPS)
 
 ABI = 32
 
@@ -12,8 +13,6 @@ priv_symbols += ENABLE_XPA
 priv_symbols += FLUSH_TO_ZERO
 priv_symbols += FLASH_START APP_START FLASH_APP_START
 priv_symbols += ISR_VEC_SPACE ISR_VECTOR_COUNT
-
-comma := ,
 
 # A bit of makefile magic:
 # foreach symbol in overridable ld-symbols :
@@ -64,6 +63,9 @@ LINKFLAGS += $(MIPS_HAL_LDFLAGS)
 LINKFLAGS += -L$(RIOTCPU)/$(CPU)/ldscripts
 LINKFLAGS += $(CFLAGS_CPU) $(CFLAGS_DBG) $(CFLAGS_OPT)
 LINKFLAGS += -Wl,--gc-sections
+
+# XFA support
+LINKFLAGS += -T$(RIOTCPU)/mips_pic32_common/ldscripts/xfa.ld
 
 OPTIONAL_CFLAGS_BLACKLIST += -Wformat-overflow
 OPTIONAL_CFLAGS_BLACKLIST += -Wformat-truncation

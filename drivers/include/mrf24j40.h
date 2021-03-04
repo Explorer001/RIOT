@@ -179,8 +179,10 @@ typedef struct {
  *
  * @param[out] dev          device descriptor
  * @param[in]  params       parameters for device initialization
+ * @param[in]  index        index of @p params in a global parameter struct array.
+ *                          If initialized manually, pass a unique identifier instead.
  */
-void mrf24j40_setup(mrf24j40_t *dev, const mrf24j40_params_t *params);
+void mrf24j40_setup(mrf24j40_t *dev, const mrf24j40_params_t *params, uint8_t index);
 
 /**
  * @brief   Trigger a hardware reset and configure radio with default values
@@ -222,11 +224,10 @@ void mrf24j40_set_addr_short(mrf24j40_t *dev, uint16_t addr);
 /**
  * @brief   Get the configured long address of the given device
  *
- * @param[in] dev           device to read from
- *
- * @return                  the currently set (8-byte) long address
+ * @param[in]  dev          device to read from
+ * @param[out] addr         the currently set (8-byte) long address
  */
-uint64_t mrf24j40_get_addr_long(mrf24j40_t *dev);
+void mrf24j40_get_addr_long(mrf24j40_t *dev, uint8_t *addr);
 
 /**
  * @brief   Set the long address of the given device
@@ -234,7 +235,7 @@ uint64_t mrf24j40_get_addr_long(mrf24j40_t *dev);
  * @param[in] dev           device to write to
  * @param[in] addr          (8-byte) long address to set
  */
-void mrf24j40_set_addr_long(mrf24j40_t *dev, uint64_t addr);
+void mrf24j40_set_addr_long(mrf24j40_t *dev, const uint8_t *addr);
 
 /**
  * @brief   Get the configured channel number of the given device
@@ -359,6 +360,27 @@ void mrf24j40_set_option(mrf24j40_t *dev, uint16_t option, bool state);
  * @param[in] state         the targeted new state
  */
 void mrf24j40_set_state(mrf24j40_t *dev, uint8_t state);
+
+/**
+ * @brief   Enable or disable proprietary Turbo Mode.
+ *
+ * Turbo mode is only compatible with other mrf24j40 chips.
+ *
+ * turbo off:   250 kbit/s (IEEE mode)
+ * turbo  on:   625 kbit/s
+ *
+ * @param[in] dev           device to change state of
+ * @param[in] enable        turbo mode control
+ */
+void mrf24j40_set_turbo(mrf24j40_t *dev, bool enable);
+
+/**
+ * @brief   Query the state of the turbo mode
+ *
+ * @param[in] dev           device to query
+ * @return                  true if Turbo Mode is enabled
+ */
+bool mrf24j40_get_turbo(mrf24j40_t *dev);
 
 /**
  * @brief   Put in sleep mode

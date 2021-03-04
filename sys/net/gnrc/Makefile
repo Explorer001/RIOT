@@ -19,6 +19,9 @@ endif
 ifneq (,$(filter gnrc_ipv6_ext_frag,$(USEMODULE)))
   DIRS += network_layer/ipv6/ext/frag
 endif
+ifneq (,$(filter gnrc_ipv6_ext_opt,$(USEMODULE)))
+  DIRS += network_layer/ipv6/ext/opt
+endif
 ifneq (,$(filter gnrc_ipv6_ext_rh,$(USEMODULE)))
   DIRS += network_layer/ipv6/ext/rh
 endif
@@ -45,9 +48,6 @@ ifneq (,$(filter gnrc_netif gnrc_netif_%,$(USEMODULE)))
 endif
 ifneq (,$(filter gnrc_netreg,$(USEMODULE)))
   DIRS += netreg
-endif
-ifneq (,$(filter gnrc_nettest,$(USEMODULE)))
-  DIRS += nettest
 endif
 ifneq (,$(filter gnrc_mac,$(USEMODULE)))
   DIRS += link_layer/mac
@@ -100,8 +100,14 @@ endif
 ifneq (,$(filter gnrc_sixlowpan_frag_fb,$(USEMODULE)))
   DIRS += network_layer/sixlowpan/frag/fb
 endif
+ifneq (,$(filter gnrc_sixlowpan_frag_minfwd,$(USEMODULE)))
+  DIRS += network_layer/sixlowpan/frag/minfwd
+endif
 ifneq (,$(filter gnrc_sixlowpan_frag_rb,$(USEMODULE)))
   DIRS += network_layer/sixlowpan/frag/rb
+endif
+ifneq (,$(filter gnrc_sixlowpan_frag_sfr,$(USEMODULE)))
+  DIRS += network_layer/sixlowpan/frag/sfr
 endif
 ifneq (,$(filter gnrc_sixlowpan_frag_stats,$(USEMODULE)))
   DIRS += network_layer/sixlowpan/frag/stats
@@ -129,6 +135,9 @@ ifneq (,$(filter gnrc_udp,$(USEMODULE)))
 endif
 ifneq (,$(filter gnrc_tcp,$(USEMODULE)))
   DIRS += transport_layer/tcp
+endif
+ifneq (,$(filter gnrc_tx_sync,$(USEMODULE)))
+  DIRS += tx_sync
 endif
 
 include $(RIOTBASE)/Makefile.base

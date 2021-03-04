@@ -24,7 +24,7 @@
 #include "clif.h"
 #include "clif_internal.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /* returns the correspondent attribute string */
@@ -258,6 +258,10 @@ ssize_t clif_get_attr(const char *input, size_t input_len, clif_attr_t *attr)
     attr->value = NULL;
     attr->key = NULL;
 
+    if (input_len == 0) {
+        return CLIF_NOT_FOUND;
+    }
+
     /* an attribute should start with the separator */
     if (*pos != LF_ATTR_SEPARATOR_C) {
         DEBUG("Attribute should start with separator, found %c\n", *pos);
@@ -278,7 +282,10 @@ ssize_t clif_get_attr(const char *input, size_t input_len, clif_attr_t *attr)
             attr->key_len = pos - attr->key;
             /* check if the value is quoted and prepare pointer for value scan */
             pos++;
-            if (*pos == '"') {
+            if (pos == end) {
+                break;
+            }
+            else if (*pos == '"') {
                 quoted = true;
                 pos++;
             }

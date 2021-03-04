@@ -5,6 +5,7 @@ export TAP ?= tap0
 
 USEMODULE += auto_init_gnrc_netif
 USEMODULE += gnrc_dhcpv6_client_6lbr
+USEMODULE += gnrc_dhcpv6_client_mud_url
 USEMODULE += gnrc_netdev_default
 USEMODULE += gnrc_pktdump
 USEMODULE += gnrc_sixlowpan_border_router_default
@@ -47,5 +48,5 @@ ifeq (,$(filter native,$(BOARD)))
 .PHONY: ethos
 
 ethos:
-	$(Q)env -u CC -u CFLAGS make -C $(RIOTBASE)/dist/tools/ethos
+	$(Q)env -u CC -u CFLAGS $(MAKE) -C $(RIOTBASE)/dist/tools/ethos
 endif

@@ -49,7 +49,9 @@ configurations. e.g:
   specific pin connections to a LCD screen, radio, etc.). Some boards might also
   define optimized `XTIMER_%` values (e.g. @ref XTIMER_BACKOFF).
 - `gpio_params.h`: if the board supports @ref drivers_saul "SAUL" then its
-  @ref saul_gpio_params_t is defined here.
+  @ref saul_gpio_params_t is defined here. (Analogously, a `adc_params.h` can
+  contain a @ref saul_adc_params_t, and `pwm_params.h` a @ref
+  saul_pwm_rgb_params_t and a @ref saul_pwm_dimmer_params_t).
 - other: other specific headers needed by one `BOARD`
 
 @note Header files do not need to be defined in `include/`, but if defined
@@ -58,7 +60,9 @@ somewhere else then they must be added to the include path. In
 
 Board initialization functions are defined in `board.c`. This file must at
 least define a `board_init()` function that is called at startup. This
-function initializes the `CPU` by calling`cpu_init()` among others.
+function initializes the `CPU` by calling`cpu_init()` among others. It is run
+before the scheduler is started, so it must not block (e.g. by performing I2C
+operations).
 
 ```c
 void board_init(void)
@@ -123,21 +127,31 @@ FEATURES_PROVIDED += periph_uart
 ### Makefile.include                                         {#makefile-include}
 
 This file contains BSP or toolchain configurations for the `BOARD`. It
-should at least define the configuration needed for flashing (i.e. a
-programmer) as well as the serial configuration (if one is available).
+should at least define the configuration needed for flashing (i.e. specify a
+default programmer) as well as the serial configuration (if one is available).
+The default serial port configuration is provided by
+`makefiles/tools/serial.inc.mk` and define the following values for the serial
+port (depends on the host OS):
 
-e.g.:
+```
+PORT_LINUX ?= /dev/ttyACM0
+PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
+```
+
+So if the board is also using this, there's no need to redefine these variables
+in the board configuration.
+
+For example a board that is using a custom serial port (via an USB to serial
+adapter) and that is flashed using openocd by default would have the following
+content in its `Makefile.include`:
 
 ```mk
 # Define the default port depending on the host OS
 PORT_LINUX ?= /dev/ttyUSB0
 PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbserial*)))
 
-# setup serial terminal
-include $(RIOTMAKE)/tools/serial.inc.mk
-
 # this board uses openocd
-include $(RIOTMAKE)/tools/openocd.inc.mk
+PROGRAMMER ?= openocd
 ```
 
 ## doc.txt                                                          {#board-doc}
@@ -171,6 +185,33 @@ any browser.
 
 */
 @endcode
+
+# Helper tools
+
+To help you start porting a board, the RIOT build system provides the
+`generate-board` make target. It is a wrapper around the
+[riotgen](https://pypi.org/project/riotgen/) command line tool that is helpful
+when starting to port a board: all required files are generated with
+copyright headers, doxygen groups, etc, so you can concentrate on the port.
+The board source files are created in the `boards/<board name>` directory.
+
+**Usage:**
+
+From the RIOT base directory, run:
+```
+make generate-board
+```
+Then answer a few questions about the driver:
+- Board name: Enter a name for your board. It will be used as the name
+  of the board directory under `boards`.
+- Board displayed name: Enter the name of the board, as displayed in the
+  Doxygen documentation.
+- CPU name: Enter the name of the CPU embedded on the board.
+- CPU model name: Enter the precise model name of the CPU.
+- Features provided: CPU features provided (and configured) for this board.
+
+Other global information (author name, email, organization) should be retrieved
+automatically from your git configuration.
 
 # Using Common code                                         {#common-board-code}
 

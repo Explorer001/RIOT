@@ -16,6 +16,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include "log.h"
@@ -26,7 +27,7 @@
 #include "kw41zrf_getset.h"
 #include "vendor/MKW41Z4.h"
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define KW41ZRF_NUM_CHANNEL      (KW41ZRF_MAX_CHANNEL - KW41ZRF_MIN_CHANNEL + 1)
@@ -116,9 +117,11 @@ void kw41zrf_set_pan(kw41zrf_t *dev, uint16_t pan)
 void kw41zrf_set_addr_short(kw41zrf_t *dev, const network_uint16_t *addr)
 {
     (void) dev;
+    /* radio hardware stores this in little endian */
     ZLL->MACSHORTADDRS0 = (ZLL->MACSHORTADDRS0
                             & ~ZLL_MACSHORTADDRS0_MACSHORTADDRS0_MASK) |
-                            ZLL_MACSHORTADDRS0_MACSHORTADDRS0(addr->u16);
+                            ZLL_MACSHORTADDRS0_MACSHORTADDRS0(byteorder_swaps(
+                                                                addr->u16));
 }
 
 void kw41zrf_set_addr_long(kw41zrf_t *dev, const eui64_t *addr)
@@ -133,6 +136,8 @@ void kw41zrf_get_addr_short(kw41zrf_t *dev, network_uint16_t *addr)
     (void) dev;
     addr->u16 = (ZLL->MACSHORTADDRS0 & ZLL_MACSHORTADDRS0_MACSHORTADDRS0_MASK) >>
                         ZLL_MACSHORTADDRS0_MACSHORTADDRS0_SHIFT;
+    /* radio hardware stores this in little endian */
+    addr->u16 = byteorder_swaps(addr->u16);
 }
 
 void kw41zrf_get_addr_long(kw41zrf_t *dev, eui64_t *addr)

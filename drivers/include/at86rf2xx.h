@@ -95,19 +95,6 @@ extern "C" {
 #endif
 
 /**
- * @brief   Max Receiver sensitivity value in dBm
- */
-#if MODULE_AT86RF233
-#   define MAX_RX_SENSITIVITY              (-52)
-#elif MODULE_AT86RF212B
-#   define MAX_RX_SENSITIVITY              (-54)
-#elif MODULE_AT86RFA1 || MODULE_AT86RFR2
-#   define MAX_RX_SENSITIVITY              (-48)
-#else
-#   define MAX_RX_SENSITIVITY              (-49)
-#endif
-
-/**
  * @brief   Min Receiver sensitivity value in dBm
  */
 #if MODULE_AT86RF233
@@ -120,7 +107,7 @@ extern "C" {
 #   define MIN_RX_SENSITIVITY              (-101)
 #endif
 
-#if defined(DOXYGEN) || defined(MODULE_AT86RF232) || defined(MODULE_AT86RF233)
+#if defined(DOXYGEN) || defined(MODULE_AT86RF232) || defined(MODULE_AT86RF233) || defined(MODULE_AT86RFR2)
 /**
  * @brief   Frame retry counter reporting
  *
@@ -284,7 +271,7 @@ typedef struct {
                                              return to @ref at86rf2xx_t::idle_state */
 #if AT86RF2XX_HAVE_RETRIES
     /* Only radios with the XAH_CTRL_2 register support frame retry reporting */
-    uint8_t tx_retries;                 /**< Number of NOACK retransmissions */
+    int8_t tx_retries;                  /**< Number of NOACK retransmissions */
 #endif
     /** @} */
 } at86rf2xx_t;
@@ -294,8 +281,10 @@ typedef struct {
  *
  * @param[out] dev          device descriptor
  * @param[in]  params       parameters for device initialization
+ * @param[in]  index        index of @p params in a global parameter struct array.
+ *                          If initialized manually, pass a unique identifier instead.
  */
-void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params);
+void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params, uint8_t index);
 
 /**
  * @brief   Trigger a hardware reset and configure radio with default values
@@ -375,6 +364,39 @@ uint8_t at86rf2xx_get_page(const at86rf2xx_t *dev);
 void at86rf2xx_set_page(at86rf2xx_t *dev, uint8_t page);
 
 /**
+ * @brief   Get the PHY mode of the given device
+ *
+ * @param[in,out] dev       device to read from
+ * @return                  the currently set phy mode
+ */
+uint8_t at86rf2xx_get_phy_mode(at86rf2xx_t *dev);
+
+/**
+ * @brief   Get the current O-QPSK rate mode of the PHY
+ *
+ * @param[in] dev           device to read from
+ *
+ * @return                  the currently set rate mode
+ */
+uint8_t at86rf2xx_get_rate(at86rf2xx_t *dev);
+
+/**
+ * @brief   Set the current O-QPSK rate mode of the PHY
+ *          rate modes > 0 are proprietary.
+ *
+ *          rate 0:   250 kbit/s (IEEE mode)
+ *          rate 1:   500 kbit/s
+ *          rate 2:  1000 kbit/s (compatible with AT86RF215)
+ *          rate 3:  2000 kbit/s
+ *
+ * @param[in] dev           device to write to
+ * @param[in] rate          the selected data rate mode (0-3)
+ *
+ * @return                  0 on success, otherwise error value
+ */
+int at86rf2xx_set_rate(at86rf2xx_t *dev, uint8_t rate);
+
+/**
  * @brief   Get the configured PAN ID of the given device
  *
  * @param[in] dev           device to read from
@@ -420,7 +442,7 @@ void at86rf2xx_set_txpower(const at86rf2xx_t *dev, int16_t txpower);
  *
  * @return                  configured receiver sensitivity in dBm
  */
-int16_t at86rf2xx_get_rxsensitivity(const at86rf2xx_t *dev);
+int8_t at86rf2xx_get_rxsensitivity(const at86rf2xx_t *dev);
 
 /**
  * @brief   Set the receiver sensitivity of the given device [in dBm]
@@ -433,7 +455,7 @@ int16_t at86rf2xx_get_rxsensitivity(const at86rf2xx_t *dev);
  * @param[in] dev           device to write to
  * @param[in] rxsens        rx sensitivity in dBm
  */
-void at86rf2xx_set_rxsensitivity(const at86rf2xx_t *dev, int16_t rxsens);
+void at86rf2xx_set_rxsensitivity(const at86rf2xx_t *dev, int8_t rxsens);
 
 /**
  * @brief   Get the maximum number of retransmissions
@@ -586,7 +608,7 @@ size_t at86rf2xx_tx_load(at86rf2xx_t *dev, const uint8_t *data,
  *
  * @param[in] dev           device to trigger
  */
-void at86rf2xx_tx_exec(const at86rf2xx_t *dev);
+void at86rf2xx_tx_exec(at86rf2xx_t *dev);
 
 /**
  * @brief   Perform one manual channel clear assessment (CCA)

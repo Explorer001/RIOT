@@ -1,6 +1,6 @@
 PKG_NAME=gecko_sdk
 PKG_URL=https://github.com/basilfx/RIOT-gecko-sdk
-PKG_VERSION=ec942b9f430193b5b3ddaf4cf2a85fc29e44696a
+PKG_VERSION=b47581a678a53c01dacea9a0a3956c67854b12f4
 PKG_LICENSE=Zlib
 
 include $(RIOTBASE)/pkg/pkg.mk
@@ -14,4 +14,4 @@ ifneq (llvm,$(TOOLCHAIN))
 endif
 
 all:
-	"$(MAKE)" -C $(PKG_BUILDDIR)/dist
+	"$(MAKE)" -C $(PKG_SOURCE_DIR)/dist

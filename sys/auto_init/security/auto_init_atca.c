@@ -16,12 +16,11 @@
  * @}
  */
 
-#ifdef MODULE_CRYPTOAUTHLIB
 #include "log.h"
 #include "atca.h"
 #include "atca_params.h"
 
-#define ENABLE_DEBUG                (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 #define ATCA_NUMOF (ARRAY_SIZE(atca_params))
@@ -35,6 +34,3 @@ void auto_init_atca(void)
         }
     }
 }
-#else
-typedef int dont_be_pedantic;
-#endif

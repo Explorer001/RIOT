@@ -24,8 +24,6 @@ USEMODULE += $(DRIVER)
 USEMODULE += fmt
 FEATURES_REQUIRED += periph_rtc
 
-CFLAGS += -DDEVEUI=\"$(DEVEUI)\" -DAPPEUI=\"$(APPEUI)\" -DAPPKEY=\"$(APPKEY)\"
-
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:
@@ -34,4 +32,23 @@ DEVELHELP ?= 1
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
 
+# Default IotLab Config to run the test
+ifneq (,$(filter iotlab%,$(MAKECMDGOALS)))
+  IOTLAB_NODES ?= 1
+  IOTLAB_TYPE  ?= st-lrwan1:sx1276
+  IOTLAB_SITE  ?= saclay
+  include $(RIOTBASE)/dist/testbed-support/Makefile.iotlab
+endif
+
+ifneq (,$(filter test,$(MAKECMDGOALS)))
+  DEFAULT_MODULE += test_utils_interactive_sync
+endif
+
 include $(RIOTBASE)/Makefile.include
+
+ifndef CONFIG_KCONFIG_USEMODULE_LORAWAN
+  # OTAA compile time configuration keys
+  CFLAGS += -DCONFIG_LORAMAC_APP_KEY_DEFAULT=\"$(APPKEY)\"
+  CFLAGS += -DCONFIG_LORAMAC_APP_EUI_DEFAULT=\"$(APPEUI)\"
+  CFLAGS += -DCONFIG_LORAMAC_DEV_EUI_DEFAULT=\"$(DEVEUI)\"
+endif

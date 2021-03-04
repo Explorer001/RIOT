@@ -3,8 +3,6 @@ include ../Makefile.tests_common
 USEMODULE += fatfs_vfs
 FEATURES_OPTIONAL += periph_rtc
 
-CFLAGS += -DVFS_FILE_BUFFER_SIZE=72 -DVFS_DIR_BUFFER_SIZE=44
-
 FATFS_IMAGE_FILE_SIZE_MIB ?= 128
 
 ifeq ($(BOARD),native)
@@ -46,10 +44,6 @@ BOARD_WHITELIST := airfy-beacon arduino-due arduino-duemilanove \
                    yunjia-nrf51822 native
 
 TEST_DEPS += image
-
-# The test requires some manual setup to work
-# So it cannot currently be run
-TEST_ON_CI_BLACKLIST += all
 
 include $(RIOTBASE)/Makefile.include
 

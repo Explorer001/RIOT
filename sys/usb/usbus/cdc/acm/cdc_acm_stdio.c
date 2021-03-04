@@ -22,6 +22,7 @@
 #define USB_H_USER_IS_RIOT_INTERNAL
 
 #include <stdio.h>
+#include <sys/types.h>
 
 #include "log.h"
 #include "isrpipe.h"
@@ -34,7 +35,7 @@
 #endif
 
 #ifdef MODULE_USB_BOARD_RESET
-#include "usb_board_reset.h"
+#include "usb_board_reset_internal.h"
 #endif
 
 static usbus_cdcacm_device_t cdcacm;
@@ -67,7 +68,7 @@ ssize_t stdio_write(const void* buffer, size_t len)
         buffer = (char *)buffer + n;
         len -= n;
     } while (len);
-    return start - (char *)buffer;
+    return (char *)buffer - start;
 }
 
 static void _cdc_acm_rx_pipe(usbus_cdcacm_device_t *cdcacm,

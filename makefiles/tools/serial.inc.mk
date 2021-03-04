@@ -1,8 +1,12 @@
+# Use as default the most commonly used ports on Linux and OSX
+PORT_LINUX ?= /dev/ttyACM0
+PORT_DARWIN ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
+
 # set default port depending on operating system
 ifeq ($(OS),Linux)
-  PORT ?= $(call ensure_value,$(PORT_LINUX),No port set)
+  PORT ?= $(PORT_LINUX)
 else ifeq ($(OS),Darwin)
-  PORT ?= $(call ensure_value,$(PORT_DARWIN),No port set)
+  PORT ?= $(PORT_DARWIN)
 endif
 
 # Default PROG_DEV is the same as PORT
@@ -29,4 +33,9 @@ else ifeq ($(RIOT_TERMINAL),miniterm)
 else ifeq ($(RIOT_TERMINAL),jlink)
   TERMPROG = $(RIOTTOOLS)/jlink/jlink.sh
   TERMFLAGS = term-rtt
+else ifeq ($(RIOT_TERMINAL),semihosting)
+  TERMPROG = $(DEBUGGER)
+  TERMFLAGS = $(DEBUGGER_FLAGS)
+  OPENOCD_DBG_EXTRA_CMD += -c 'arm semihosting enable'
+  $(call target-export-variables,term cleanterm,OPENOCD_DBG_EXTRA_CMD)
 endif

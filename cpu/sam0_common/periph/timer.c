@@ -20,6 +20,7 @@
  * @}
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -29,13 +30,30 @@
 #include "periph/timer.h"
 #include "periph_conf.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 /**
  * @brief Timer state memory
  */
 static timer_isr_ctx_t config[TIMER_NUMOF];
+
+static uint32_t _oneshot;
+
+static inline void set_oneshot(tim_t tim, int chan)
+{
+    _oneshot |= (1 << chan) << (TIMER_CHANNEL_NUMOF * tim);
+}
+
+static inline void clear_oneshot(tim_t tim, int chan)
+{
+    _oneshot &= ~((1 << chan) << (TIMER_CHANNEL_NUMOF * tim));
+}
+
+static inline bool is_oneshot(tim_t tim, int chan)
+{
+    return _oneshot & ((1 << chan) << (TIMER_CHANNEL_NUMOF * tim));
+}
 
 static inline TcCount32 *dev(tim_t tim)
 {
@@ -71,7 +89,7 @@ static inline void _irq_enable(tim_t tim)
     NVIC_EnableIRQ(timer_config[tim].irq);
 }
 
-static uint8_t _get_prescaler(unsigned long freq_out, unsigned long freq_in)
+static uint8_t _get_prescaler(uint32_t freq_out, uint32_t freq_in)
 {
     uint8_t scale = 0;
     while (freq_in > freq_out) {
@@ -89,10 +107,36 @@ static uint8_t _get_prescaler(unsigned long freq_out, unsigned long freq_in)
     return scale;
 }
 
+/* TOP value is CC0 */
+static inline void _set_mfrq(tim_t tim)
+{
+    timer_stop(tim);
+    wait_synchronization(tim);
+#ifdef TC_WAVE_WAVEGEN_MFRQ
+    dev(tim)->WAVE.reg = TC_WAVE_WAVEGEN_MFRQ;
+#else
+    dev(tim)->CTRLA.bit.WAVEGEN = TC_CTRLA_WAVEGEN_MFRQ_Val;
+#endif
+    timer_start(tim);
+}
+
+/* TOP value is MAX timer value */
+static inline void _set_nfrq(tim_t tim)
+{
+    timer_stop(tim);
+    wait_synchronization(tim);
+#ifdef TC_WAVE_WAVEGEN_NFRQ
+    dev(tim)->WAVE.reg = TC_WAVE_WAVEGEN_NFRQ;
+#else
+    dev(tim)->CTRLA.bit.WAVEGEN = TC_CTRLA_WAVEGEN_NFRQ_Val;
+#endif
+    timer_start(tim);
+}
+
 /**
  * @brief Setup the given timer
  */
-int timer_init(tim_t tim, unsigned long freq, timer_cb_t cb, void *arg)
+int timer_init(tim_t tim, uint32_t freq, timer_cb_t cb, void *arg)
 {
     const tc32_conf_t *cfg = &timer_config[tim];
     uint8_t scale = _get_prescaler(freq, sam0_gclk_freq(cfg->gclk_src));
@@ -102,7 +146,7 @@ int timer_init(tim_t tim, unsigned long freq, timer_cb_t cb, void *arg)
         return -1;
     }
 
-    /* make sure the prescaler is withing range */
+    /* make sure the prescaler is within range */
     if (scale > TC_CTRLA_PRESCALER_DIV1024_Val) {
         DEBUG("[timer %d] scale %d is out of range\n", tim, scale);
         return -1;
@@ -187,7 +231,52 @@ int timer_set_absolute(tim_t tim, int channel, unsigned int value)
         break;
     default:
         return -1;
-     }
+    }
+
+    set_oneshot(tim, channel);
+
+    return 0;
+}
+
+int timer_set_periodic(tim_t tim, int channel, unsigned int value, uint8_t flags)
+{
+    DEBUG("Setting timer %i channel %i to %i (repeating)\n", tim, channel, value);
+
+    /* set timeout value */
+    switch (channel) {
+    case 0:
+        dev(tim)->INTFLAG.reg = TC_INTFLAG_MC0;
+
+        if (flags & TIM_FLAG_RESET_ON_MATCH) {
+            _set_mfrq(tim);
+        } else {
+            _set_nfrq(tim);
+        }
+
+        _set_cc(tim, 0, value);
+        dev(tim)->INTENSET.reg = TC_INTENSET_MC0;
+        break;
+    case 1:
+
+        /* only CC0 can be used to set TOP */
+        if (flags & TIM_FLAG_RESET_ON_MATCH) {
+            assert(0);
+            return -1;
+        }
+
+        dev(tim)->INTFLAG.reg = TC_INTFLAG_MC1;
+        _set_cc(tim, 1, value);
+        dev(tim)->INTENSET.reg = TC_INTENSET_MC1;
+        break;
+    default:
+        return -1;
+    }
+
+    if (flags & TIM_FLAG_RESET_ON_SET) {
+        dev(tim)->COUNT.reg = 0;
+    }
+
+    clear_oneshot(tim, channel);
 
     return 0;
 }
@@ -255,13 +344,22 @@ static inline void timer_isr(tim_t tim)
     tc->INTFLAG.reg = status;
 
     if ((status & TC_INTFLAG_MC0) && tc->INTENSET.bit.MC0) {
-        tc->INTENCLR.reg = TC_INTENCLR_MC0;
+
+        if (is_oneshot(tim, 0)) {
+            tc->INTENCLR.reg = TC_INTENCLR_MC0;
+        }
+
         if (config[tim].cb) {
             config[tim].cb(config[tim].arg, 0);
         }
     }
+
     if ((status & TC_INTFLAG_MC1) && tc->INTENSET.bit.MC1) {
-        tc->INTENCLR.reg = TC_INTENCLR_MC1;
+
+        if (is_oneshot(tim, 1)) {
+            tc->INTENCLR.reg = TC_INTENCLR_MC1;
+        }
+
         if (config[tim].cb) {
             config[tim].cb(config[tim].arg, 1);
         }

@@ -10,7 +10,7 @@ else
 endif
 
 RESET ?= $(RIOTBOARD)/native/dist/reset.sh
-FLASHER = true
+FLASHER ?=
 FLASHFILE ?= $(ELFFILE)
 
 TERMPROG ?= $(FLASHFILE)
@@ -23,7 +23,7 @@ export GPROF ?= gprof
 CFLAGS += -Wall -Wextra -pedantic $(CFLAGS_DBG)
 CFLAGS_DBG ?= -g3
 
-# default std set to gnu99 of not overwritten by user
+# default std set to gnu11 if not overwritten by user
 ifeq (,$(filter -std=%, $(CFLAGS)))
   CFLAGS += -std=gnu11
 endif
@@ -59,6 +59,9 @@ else
   LINKFLAGS += -ldl
 endif
 
+# XFA (cross file array) support
+LINKFLAGS += -T$(RIOTBASE)/cpu/native/ldscripts/xfa.ld
+
 # clean up unused functions
 CFLAGS += -ffunction-sections -fdata-sections
 ifeq ($(OS),Darwin)
@@ -69,7 +72,7 @@ endif
 LINKFLAGS += -ffunction-sections
 
 # set the tap interface for term/valgrind
-ifneq (,$(filter netdev_default gnrc_netdev_default,$(USEMODULE)))
+ifneq (,$(filter netdev_tap,$(USEMODULE)))
   PORT ?= tap0
 endif
 
@@ -77,9 +80,10 @@ endif
 EEPROM_FILE ?= $(BINDIR)/native.eeprom
 
 # set the eeprom file flags only when the periph_eeprom feature is used.
-# NOTE: This can be turned into normal conditional syntax once #9913 is fixed
-EEPROM_FILE_FLAGS = $(if $(filter periph_eeprom,$(FEATURES_USED)),--eeprom $(EEPROM_FILE),)
-TERMFLAGS += $(EEPROM_FILE_FLAGS)
+ifneq (,$(filter periph_eeprom,$(FEATURES_USED)))
+  EEPROM_FILE_FLAGS = --eeprom $(EEPROM_FILE)
+  TERMFLAGS += $(EEPROM_FILE_FLAGS)
+endif
 
 TERMFLAGS += $(PORT)
 
@@ -136,9 +140,6 @@ endif
 
 all: # do not override first target
 
-all-debug: all
-	@$(COLOR_ECHO) '$(COLOR_RED)`all-debug` is deprecated, just use `all`$(COLOR_RESET)'
-
 all-gprof: all
 
 all-asan: all
@@ -168,5 +169,3 @@ eval-gprof:
 
 eval-cachegrind:
 	$(CGANNOTATE) $(shell ls -rt cachegrind.out* | tail -1)
-
-UNDEF += $(BINDIR)/cpu/startup.o

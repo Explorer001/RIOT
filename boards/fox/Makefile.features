@@ -1,4 +1,4 @@
-CPU = stm32f1
+CPU = stm32
 CPU_MODEL = stm32f103re
 
 # Put defined MCU peripherals here (in alphabetical order)
@@ -8,3 +8,7 @@ FEATURES_PROVIDED += periph_rtt
 FEATURES_PROVIDED += periph_spi
 FEATURES_PROVIDED += periph_timer
 FEATURES_PROVIDED += periph_uart
+
+# fox board provides a custom default Kconfig clock configuration. The same as
+# iotlab boards.
+KCONFIG_ADD_CONFIG += $(RIOTBOARD)/common/iotlab/clock.config
