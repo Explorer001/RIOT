@@ -35,12 +35,14 @@ void netdev_ieee802154_reset(netdev_ieee802154_t *dev)
     dev->seq = random_uint32();
     dev->flags = 0;
 
+    /* Quickfix for BATMAN */
+    dev->proto = GNRC_NETTYPE_BATMAN;
     /* set default protocol */
-#ifdef MODULE_GNRC_SIXLOWPAN
-    dev->proto = GNRC_NETTYPE_SIXLOWPAN;
-#elif MODULE_GNRC
-    dev->proto = GNRC_NETTYPE_UNDEF;
-#endif
+//#ifdef MODULE_GNRC_SIXLOWPAN
+//    dev->proto = GNRC_NETTYPE_SIXLOWPAN;
+//#elif MODULE_GNRC
+//    dev->proto = GNRC_NETTYPE_UNDEF;
+//#endif
 
     /* Initialize PAN ID and call netdev::set to propagate it */
     dev->pan = CONFIG_IEEE802154_DEFAULT_PANID;
