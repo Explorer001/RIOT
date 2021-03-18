@@ -60,6 +60,8 @@ typedef enum {
     GNRC_NETTYPE_NETIF = -1,
     GNRC_NETTYPE_UNDEF = 0,     /**< Protocol is undefined */
 
+    GNRC_NETTYPE_BATMAN,        /**< Protocol is B.A.T.M.A.N */
+
 #if IS_USED(MODULE_GNRC_NETTYPE_SIXLOWPAN) || defined(DOXYGEN)
     GNRC_NETTYPE_SIXLOWPAN,     /**< Protocol is 6LoWPAN */
 #endif
