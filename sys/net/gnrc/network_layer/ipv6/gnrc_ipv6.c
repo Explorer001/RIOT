@@ -479,6 +479,34 @@ static void _send_by_netif_hdr(gnrc_pktsnip_t *pkt)
 }
 #endif  /* MODULE_GNRC_IPV6_EXT_FRAG */
 
+/**
+ * Fakes nib entry.
+ * 
+ * @param dst The destination ip address.
+ * @param nce Neighbor cache entry.
+ * @return 0.
+ * 
+ * Routing is no longer done by IPv6 on the network layer.
+ * Instead packets are routed by batman on layer 2. Batman
+ * determines the destination by the Layer 2 mac. Since
+ * destination MAC and IPv6 are more or less the same,
+ * this address can be generated here.
+ */
+static int
+_batman_l2addr(const ipv6_addr_t *dst, gnrc_ipv6_nib_nc_t *nce)
+{
+    memcpy(&nce->ipv6, dst, sizeof(ipv6_addr_t));
+    memset(nce->l2addr, 0, CONFIG_GNRC_IPV6_NIB_L2ADDR_MAX_LEN);
+
+    nce->l2addr[0] = 0xDE;
+    nce->l2addr[1] = 0xAD;
+    memcpy(nce->l2addr + 2, dst->u8 + 10, 6);
+    nce->l2addr_len = 8;
+    nce->info = GNRC_IPV6_NIB_ROUTE_INFO_TYPE_UNDEF;
+
+    return 0;
+}
+
 static void _send_unicast(gnrc_pktsnip_t *pkt, bool prep_hdr,
                           gnrc_netif_t *netif, ipv6_hdr_t *ipv6_hdr,
                           uint8_t netif_hdr_flags)
@@ -486,14 +514,17 @@ static void _send_unicast(gnrc_pktsnip_t *pkt, bool prep_hdr,
     gnrc_ipv6_nib_nc_t nce;
 
     DEBUG("ipv6: send unicast\n");
-    if (gnrc_ipv6_nib_get_next_hop_l2addr(&ipv6_hdr->dst, netif, pkt,
-                                          &nce) < 0) {
+    //if (gnrc_ipv6_nib_get_next_hop_l2addr(&ipv6_hdr->dst, netif, pkt,
+    //                                      &nce) < 0) {
+    if (_batman_l2addr(&ipv6_hdr->dst, &nce) < 0) {
         /* packet is released by NIB */
         DEBUG("ipv6: no link-layer address or interface for next hop to %s\n",
               ipv6_addr_to_str(addr_str, &ipv6_hdr->dst, sizeof(addr_str)));
         return;
     }
-    netif = gnrc_netif_get_by_pid(gnrc_ipv6_nib_nc_get_iface(&nce));
+    /* we assume that we are a netif highlander */
+    netif = gnrc_netif_iter(NULL);
+    //netif = gnrc_netif_get_by_pid(gnrc_ipv6_nib_nc_get_iface(&nce));
     assert(netif != NULL);
     if (_safe_fill_ipv6_hdr(netif, pkt, prep_hdr)) {
         DEBUG("ipv6: add interface header to packet\n");
