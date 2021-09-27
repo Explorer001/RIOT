@@ -278,6 +278,82 @@ typedef void (*sched_callback_t)(kernel_pid_t active, kernel_pid_t next);
 void sched_register_cb(sched_callback_t callback);
 #endif /* MODULE_SCHED_CB */
 
+/**
+ * @brief   Advance a runqueue
+ *
+ *  Advances the runqueue of that priority by one step to the next thread in
+ *  that priority.
+ *  Next time that priority is scheduled the now first thread will get activated.
+ *  Calling this will not start the scheduler.
+ *
+ * @warning This API is not intended for out of tree users.
+ *          Breaking API changes will be done without notice and
+ *          without deprecation. Consider yourself warned!
+ *
+ * @param   prio      The priority of the runqueue to advance
+ *
+ */
+static inline void sched_runq_advance(uint8_t prio)
+{
+    clist_lpoprpush(&sched_runqueues[prio]);
+}
+
+#if (IS_USED(MODULE_SCHED_RUNQ_CALLBACK)) || defined(DOXYGEN)
+/**
+ * @brief   Scheduler runqueue (change) callback
+ *
+ * @details Function has to be provided by the user of this API.
+ *          It will be called:
+ *          - when the scheduler is run,
+ *          - when a thread enters the active queue or
+ *          - when the last thread leaves a queue
+ *
+ * @warning This API is not intended for out of tree users.
+ *          Breaking API changes will be done without notice and
+ *          without deprecation. Consider yourself warned!
+ *
+ * @param   prio      the priority of the runqueue that changed
+ *
+ */
+extern void sched_runq_callback(uint8_t prio);
+#endif
+
+/**
+ * @brief   Tell if the number of threads in a runqueue is 0
+ *
+ * @param[in]   prio      The priority of the runqueue to get information of
+ * @return      Truth value for that information
+ * @warning     This API is not intended for out of tree users.
+ */
+static inline int sched_runq_is_empty(uint8_t prio)
+{
+    return clist_is_empty(&sched_runqueues[prio]);
+}
+
+/**
+ * @brief   Tell if the number of threads in a runqueue is 1
+ *
+ * @param[in]   prio      The priority of the runqueue to get information of
+ * @return      Truth value for that information
+ * @warning     This API is not intended for out of tree users.
+ */
+static inline int sched_runq_exactly_one(uint8_t prio)
+{
+    return clist_exactly_one(&sched_runqueues[prio]);
+}
+
+/**
+ * @brief   Tell if the number of threads in a runqueue greater than 1
+ *
+ * @param[in]   prio      The priority of the runqueue to get information of
+ * @return      Truth value for that information
+ * @warning     This API is not intended for out of tree users.
+ */
+static inline int sched_runq_more_than_one(uint8_t prio)
+{
+    return clist_more_than_one(&sched_runqueues[prio]);
+}
+
 #ifdef __cplusplus
 }
 #endif

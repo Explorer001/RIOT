@@ -118,6 +118,11 @@ int gnrc_lorawan_parse_dl(gnrc_lorawan_t *mac, uint8_t *buf, size_t len,
             return -1;
         }
 
+        if (pkt->port > LORAMAC_PORT_MAX) {
+            DEBUG("gnrc_lorawan: packet with port > 223. Drop\n");
+            return -1;
+        }
+
         if (buf < p_mic) {
             pkt->enc_payload.iol_base = buf;
             pkt->enc_payload.iol_len = p_mic - buf;
@@ -326,21 +331,34 @@ static void _transmit_pkt(gnrc_lorawan_t *mac)
     last_snip->iol_next = NULL;
 }
 
-void gnrc_lorawan_event_ack_timeout(gnrc_lorawan_t *mac)
+void gnrc_lorawan_event_retrans_timeout(gnrc_lorawan_t *mac)
 {
     _transmit_pkt(mac);
 }
 
 static void _handle_retransmissions(gnrc_lorawan_t *mac)
 {
+    /* Check if retransmission should be handled.
+     *
+     * If there was a confirmed uplink, follow the standard retransmission
+     * procedure.
+     * If it was an unconfirmed uplink, perform retransmissions only if
+     * there's redundancy > 0 */
     if (mac->mcps.nb_trials-- == 0) {
-        _end_of_tx(mac, MCPS_CONFIRMED, -ETIMEDOUT);
+        if (mac->mcps.waiting_for_ack) {
+            /* If we are here, the node ran out of confirmed uplink retransmissions.
+             * This means, the transmission was not successful. */
+            _end_of_tx(mac, MCPS_CONFIRMED, -ETIMEDOUT);
+        }
+        else {
+            /* In this case, we finished sending one or more unconfirmed
+             * (depending on the redundancy) */
+            _end_of_tx(mac, MCPS_UNCONFIRMED, GNRC_LORAWAN_REQ_STATUS_SUCCESS);
+        }
     }
     else {
-        mac->msg.type = MSG_TYPE_MCPS_ACK_TIMEOUT;
-        xtimer_set_msg(&mac->rx, 1000000 + random_uint32_range(0,
-                                                               2000000), &mac->msg,
-                       thread_getpid());
+        /* Schedule a retransmission */
+        gnrc_lorawan_set_timer(mac, 1000000 + random_uint32_range(0, 2000000));
     }
 }
 
@@ -357,14 +375,7 @@ void gnrc_lorawan_event_no_rx(gnrc_lorawan_t *mac)
         return;
     }
 
-    /* Otherwise check if retransmission should be handled */
-
-    if (mac->mcps.waiting_for_ack) {
-        _handle_retransmissions(mac);
-    }
-    else {
-        _end_of_tx(mac, MCPS_UNCONFIRMED, GNRC_LORAWAN_REQ_STATUS_SUCCESS);
-    }
+    _handle_retransmissions(mac);
 }
 
 void gnrc_lorawan_mcps_request(gnrc_lorawan_t *mac,
@@ -415,7 +426,7 @@ void gnrc_lorawan_mcps_request(gnrc_lorawan_t *mac,
     mac->mcps.waiting_for_ack = waiting_for_ack;
     mac->mcps.ack_requested = false;
 
-    mac->mcps.nb_trials = CONFIG_LORAMAC_DEFAULT_RETX;
+    mac->mcps.nb_trials = waiting_for_ack ? CONFIG_LORAMAC_DEFAULT_RETX : mac->mcps.redundancy;
 
     mac->mcps.msdu = pkt;
     mac->last_dr = mcps_request->data.dr;

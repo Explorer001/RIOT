@@ -1,3 +1,4 @@
+USEMODULE += lvgl
 USEMODULE += lvgl_core
 USEMODULE += lvgl_draw
 USEMODULE += lvgl_font

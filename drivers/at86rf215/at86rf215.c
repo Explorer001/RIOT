@@ -31,7 +31,7 @@
 
 static void _setup_interface(at86rf215_t *dev, const at86rf215_params_t *params, uint8_t index)
 {
-    netdev_t *netdev = (netdev_t *)dev;
+    netdev_t *netdev = &dev->netdev.netdev;
 
     netdev->driver = &at86rf215_driver;
     dev->params = *params;
@@ -93,6 +93,9 @@ void at86rf215_reset_and_cfg(at86rf215_t *dev)
     /* default to requesting ACKs, just like at86rf2xx */
     const netopt_enable_t enable = NETOPT_ENABLE;
     netdev_ieee802154_set(&dev->netdev, NETOPT_ACK_REQ, &enable, sizeof(enable));
+
+    /* enable RX start IRQs */
+    at86rf215_reg_or(dev, dev->BBC->RG_IRQM, BB_IRQ_RXAM);
 }
 
 void at86rf215_reset(at86rf215_t *dev)
@@ -147,6 +150,10 @@ if (!IS_ACTIVE(CONFIG_AT86RF215_USE_CLOCK_OUTPUT)){
         reg |= AMCS_AACK_MASK;
     }
 
+    if (IS_USED(MODULE_AT86RF215_TIMESTAMP)) {
+        at86rf215_reg_write(dev, dev->BBC->RG_CNTC,
+                                 CNTC_EN_MASK | CNTC_CAPRXS_MASK);
+    }
     at86rf215_reg_write(dev, dev->BBC->RG_AMCS, reg);
 
     if (CONFIG_AT86RF215_DEFAULT_PHY_MODE == IEEE802154_PHY_OQPSK) {
@@ -249,7 +256,7 @@ static void _block_while_busy(at86rf215_t *dev)
 
     do {
         if (gpio_read(dev->params.int_pin) || dev->timeout) {
-            at86rf215_driver.isr((netdev_t *) dev);
+            at86rf215_driver.isr(&dev->netdev.netdev);
         }
         /* allow the other interface to process events */
         thread_yield();

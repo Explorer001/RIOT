@@ -103,13 +103,14 @@ export HEXFILE               # The 'intel hex' stripped result of the compilatio
 # DEBUGGER_FLAGS             # The parameters to supply to DEBUGGER.
 # DEBUGSERVER                # The command to call on "make debug-server", usually a script starting the GDB server.
 # DEBUGSERVER_FLAGS          # The parameters to supply to DEBUGSERVER.
+# DEVELHELP                  # Set to 1 to spend ROM, RAM and CPU time for help during development (e.g. enable asserts())
 # RESET                      # The command to call on "make reset", this command resets/reboots the target.
 # RESET_FLAGS                # The parameters to supply to RESET.
 # PROGRAMMER                 # The programmer to use when flashing, resetting or debugging
 # PROGRAMMERS_SUPPORTED      # The list of programmers supported by a board
 # PROGRAMMER_QUIET           # Change verbosity of programmer output (only used with flash and reset targets).
                              # Default is 1, not verbose. Use 0 to get normal programmer output.
-# USE_PROGRAMMER_WRAPPER_SCRIPT     # Use the programmer wrapper Python script. Default is 1 (0 if RIOT_CI_BUILD is set).
+# USE_PROGRAMMER_WRAPPER_SCRIPT     # Use the programmer wrapper Python script. Default is 0 (wrapper not used).
 
 
 export DLCACHE               # directory used to cache http downloads
@@ -124,3 +125,4 @@ export AFL_FLAGS             # Additional command-line flags passed to afl durin
 
 # LOG_LEVEL                  # Logging level as integer (NONE: 0, ERROR: 1, WARNING: 2, INFO: 3, DEBUG: 4, default: 3)
 # KCONFIG_ADD_CONFIG         # List of .config files to be merged used by Boards and CPUs. See kconfig.mk
+# VERBOSE_ASSERT             # Set to 1 to print the file and line of a failed assert when assertions blow

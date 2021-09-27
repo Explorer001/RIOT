@@ -107,13 +107,16 @@ static void lwmac_reinit_radio(gnrc_netif_t *netif)
                                 sizeof(netif->l2addr));
     }
 
-   /* Enable RX-start and TX-started and TX-END interrupts. */
-   netopt_enable_t enable = NETOPT_ENABLE;
-   netif->dev->driver->set(netif->dev, NETOPT_RX_START_IRQ, &enable, sizeof(enable));
-   netif->dev->driver->set(netif->dev, NETOPT_RX_END_IRQ, &enable, sizeof(enable));
-   netif->dev->driver->set(netif->dev, NETOPT_TX_START_IRQ, &enable, sizeof(enable));
-   netif->dev->driver->set(netif->dev, NETOPT_TX_END_IRQ, &enable, sizeof(enable));
-
+    /* Check if RX-start and TX-started and TX-END interrupts are supported */
+    if (IS_ACTIVE(DEVELHELP)) {
+        netopt_enable_t enable;
+        netif->dev->driver->get(netif->dev, NETOPT_RX_START_IRQ, &enable, sizeof(enable));
+        assert(enable == NETOPT_ENABLE);
+        netif->dev->driver->get(netif->dev, NETOPT_RX_END_IRQ, &enable, sizeof(enable));
+        assert(enable == NETOPT_ENABLE);
+        netif->dev->driver->get(netif->dev, NETOPT_TX_END_IRQ, &enable, sizeof(enable));
+        assert(enable == NETOPT_ENABLE);
+    }
 }
 
 static gnrc_pktsnip_t *_make_netif_hdr(uint8_t *mhr)
@@ -147,7 +150,7 @@ static gnrc_pktsnip_t *_recv(gnrc_netif_t *netif)
 {
     netdev_t *dev = netif->dev;
     netdev_ieee802154_rx_info_t rx_info;
-    netdev_ieee802154_t *state = (netdev_ieee802154_t *)netif->dev;
+    netdev_ieee802154_t *state = container_of(dev, netdev_ieee802154_t, netdev);
     gnrc_pktsnip_t *pkt = NULL;
     int bytes_expected = dev->driver->recv(dev, NULL, 0, NULL);
 

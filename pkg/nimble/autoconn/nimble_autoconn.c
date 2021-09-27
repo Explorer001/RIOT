@@ -78,7 +78,7 @@ static void _on_state_change(struct ble_npl_event *ev)
         nimble_scanner_stop();
         /* start advertising/accepting */
         int res = nimble_netif_accept(_ad.buf, _ad.pos, &_adv_params);
-        assert((res == NIMBLE_NETIF_OK) || (res == NIMBLE_NETIF_NOMEM));
+        assert((res == 0) || (res == -ENOMEM));
         (void)res;
 
         /* schedule next state change */
@@ -215,7 +215,7 @@ static void _on_netif_evt(int handle, nimble_netif_event_t event,
             break;
         case NIMBLE_NETIF_ABORT_SLAVE:
             _evt_dbg("ABORT slave", handle, addr);
-            _state = STATE_IDLE;
+            _deactivate();
             break;
         case NIMBLE_NETIF_CONN_UPDATED:
             _evt_dbg("UPDATED", handle, addr);
@@ -277,8 +277,8 @@ int nimble_autoconn_update(const nimble_autoconn_params_t *params,
     /* populate the connection parameters */
     _conn_params.scan_itvl = BLE_GAP_SCAN_ITVL_MS(params->scan_win);
     _conn_params.scan_window = _conn_params.scan_itvl;
-    _conn_params.itvl_min = BLE_GAP_CONN_ITVL_MS(params->conn_itvl);
-    _conn_params.itvl_max = _conn_params.itvl_min;
+    _conn_params.itvl_min = BLE_GAP_CONN_ITVL_MS(params->conn_itvl_min);
+    _conn_params.itvl_max = BLE_GAP_CONN_ITVL_MS(params->conn_itvl_max);
     _conn_params.latency = 0;
     _conn_params.supervision_timeout = BLE_GAP_SUPERVISION_TIMEOUT_MS(
                                                          params->conn_super_to);

@@ -56,7 +56,6 @@ int riotboot_flashwrite_init_raw(riotboot_flashwrite_t *state, int target_slot,
                   "Flashpage buffer must be a multiple of write block size.");
 #endif
 
-
     LOG_INFO(LOG_PREFIX "initializing update to target slot %i\n",
              target_slot);
 
@@ -140,7 +139,6 @@ int riotboot_flashwrite_putbytes(riotboot_flashwrite_t *state,
         memcpy(state->flashpage_buf + flashwrite_buffer_pos, bytes, to_copy);
         flashpage_avail -= to_copy;
 
-
         state->offset += to_copy;
         bytes += to_copy;
         len -= to_copy;
@@ -213,11 +211,13 @@ int riotboot_flashwrite_invalidate_latest(void)
 int riotboot_flashwrite_finish_raw(riotboot_flashwrite_t *state,
                                    const uint8_t *bytes, size_t len)
 {
+#ifndef PERIPH_FLASHPAGE_CUSTOM_PAGESIZES
     assert(len <= FLASHPAGE_SIZE);
+#endif
 
     uint8_t *slot_start = (uint8_t *)riotboot_slot_get_hdr(state->target_slot);
 
-#if CONFIG_RIOTBOOT_FLASHWRITE_RAW
+#if IS_ACTIVE(CONFIG_RIOTBOOT_FLASHWRITE_RAW)
     memcpy(state->firstblock_buf, bytes, len);
     flashpage_write(slot_start, state->firstblock_buf,
                     RIOTBOOT_FLASHPAGE_BUFFER_SIZE);

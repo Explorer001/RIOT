@@ -9,7 +9,7 @@ RIOTBASE ?= $(CURDIR)/../..
 
 # Include packages that pull up and auto-init the link layer.
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
-USEMODULE += gnrc_netdev_default
+USEMODULE += netdev_default
 USEMODULE += auto_init_gnrc_netif
 # Activate ICMPv6 error messages
 USEMODULE += gnrc_icmpv6_error
@@ -23,6 +23,7 @@ USEMODULE += auto_init_gnrc_rpl
 USEMODULE += gnrc_pktdump
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
+USEMODULE += netutils
 # Add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_commands
@@ -36,9 +37,6 @@ USEMODULE += netstats_rpl
 # to auto-configure that upstream DNS server.
 # USEMODULE += sock_dns              # include DNS client
 # USEMODULE += gnrc_ipv6_nib_dns     # include RDNSS option handling
-
-# Uncomment this to enable legacy support of netdev for IEEE 802.15.4 radios.
-# USEMODULE += netdev_ieee802154_legacy
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

@@ -67,7 +67,8 @@ static int test_speed_adjustment(const int32_t speed)
     print_str(" (~");
     {
         int64_t tmp = speed * 100000ULL;
-        tmp /= UINT32_MAX;
+        /* trusting compiler to use arithmetic right shift, when available instead of division */
+        tmp /= 1LL << 32;
         tmp += 100000ULL;
         char output[16];
         print(output, fmt_s32_dfp(output, (int32_t)tmp, -3));
@@ -139,7 +140,6 @@ static void clock_adj_cb(void *arg, int chan)
     atomic_store(&timestamp, now);
     mutex_unlock(&sync_mutex);
 }
-
 
 static int test_clock_adjustment(int32_t offset)
 {

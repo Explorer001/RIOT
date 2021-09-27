@@ -15,6 +15,9 @@ to `RIOT`, the different files as well as their functionality.
 @note We assume here that your `CPU` and `CPU_MODEL` is already supported
 in `RIOT` so no peripheral or cpu implementation is needed.
 
+# Porting flowchart                                         {#porting-flowchart}
+@dotfile porting-boards.dot
+
 # General structure                                         {#general-structure}
 
 Like @ref creating-an-application "applications" or @ref creating-modules
@@ -104,6 +107,29 @@ endif
 @note `Makefile.dep` is processed only once so you have to take care of adding
 the dependency block for your board *before* its dependencies pull in their own
 dependencies.
+
+#### Default configurations
+As explained in @ref default-configurations "Default Configurations", there are
+two pseudomodules that are used to indicate that certain drivers of devices
+present in the platform should be enabled. Each board (or CPU) has knowledge as
+to which drivers should be enabled in each case.
+
+The previous code snippet shows how a board which has a @ref drivers_sx127x
+device, pulls in its driver when the default network interfaces are required.
+
+When the pseudomodule `saul_default` is enabled, the board should pull in all
+the drivers of the devices it has which provide a @ref drivers_saul interface. This is
+usually done as following:
+
+```mk
+ifneq (,$(filter saul_default,$(USEMODULE)))
+  USEMODULE += saul_gpio
+  USEMODULE += apds9960
+  USEMODULE += bmp280_i2c
+  USEMODULE += lis3mdl
+  USEMODULE += sht3x
+endif
+```
 
 ### Makefile.features                                       {#makefile-features}
 
@@ -336,3 +362,13 @@ Some scripts and tools available to ease `BOARD` porting and testing:
 
   - Run `dist/tools/compile_and_test_for_board/compile_and_test_for_board.py . <board> --with-test-only`
     to run all automated tests on the new board.
+
+# Further reference                                         {#further-reference}
+
+- [In her blog][martines-blog], Martine Lenders documented her approach of
+  porting the @ref boards_feather-nrf52840 in February 2020.
+- [Over at HackMD][hackmd-slstk3400a], Akshai M documented his approach of
+  porting the @ref boards_slstk3400a in July 2020.
+
+[martines-blog]: https://blog.martine-lenders.eu/riot-board-en.html
+[hackmd-slstk3400a]: https://hackmd.io/njFHwQ33SNS3sQKAkLkNtQ
