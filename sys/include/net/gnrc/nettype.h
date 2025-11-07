@@ -96,6 +96,9 @@ typedef enum {
 #if IS_USED(MODULE_GNRC_NETTYPE_ICMPV6) || defined(DOXYGEN)
     GNRC_NETTYPE_ICMPV6,        /**< Protocol is ICMPv6 */
 #endif
+#if IS_USED(MODULE_GNRC_RPINT) || defined(DOXYGEN)
+    GNRC_NETTYPE_RPINT,         /**< Protocol is experimental rpINT */
+#endif
 
 #if IS_USED(MODULE_GNRC_NETTYPE_CCN) || defined(DOXYGEN)
     GNRC_NETTYPE_CCN,           /**< Protocol is CCN */
@@ -246,6 +249,10 @@ static inline gnrc_nettype_t gnrc_nettype_from_protnum(uint8_t num)
         case PROTNUM_IPV6_EXT_MOB:
             return GNRC_NETTYPE_IPV6_EXT;
 #endif
+#if IS_USED(MODULE_GNRC_RPINT)
+        case PROTNUM_IPV6_EXT_EXP1:
+            return GNRC_NETTYPE_RPINT;
+#endif
         default:
             return GNRC_NETTYPE_UNDEF;
     }
@@ -280,6 +287,10 @@ static inline uint8_t gnrc_nettype_to_protnum(gnrc_nettype_t type)
 #if IS_USED(MODULE_GNRC_NETTYPE_UDP)
         case GNRC_NETTYPE_UDP:
             return PROTNUM_UDP;
+#endif
+#if IS_USED(MODULE_GNRC_RPINT)
+        case GNRC_NETTYPE_RPINT:
+            return PROTNUM_IPV6_EXT_EXP1;
 #endif
         default:
             return PROTNUM_RESERVED;

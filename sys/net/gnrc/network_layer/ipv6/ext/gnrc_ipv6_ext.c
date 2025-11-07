@@ -130,6 +130,10 @@ gnrc_pktsnip_t *gnrc_ipv6_ext_process_all(gnrc_pktsnip_t *pkt,
             case PROTNUM_IPV6_EXT_FRAG:
             case PROTNUM_IPV6_EXT_AH:
             case PROTNUM_IPV6_EXT_ESP:
+#ifdef MODULE_GNRC_RPINT
+            case PROTNUM_IPV6_EXT_EXP1:
+            case PROTNUM_IPV6_EXT_EXP2:
+#endif
             case PROTNUM_IPV6_EXT_MOB: {
                 ipv6_ext_t *ext_hdr;
                 uint8_t nh;
@@ -328,6 +332,25 @@ static gnrc_pktsnip_t *_demux(gnrc_pktsnip_t *pkt, unsigned protnum)
             }
             break;
 
+#ifdef MODULE_GNRC_RPINT
+        /* Dispatch to specific rpINT handler */
+        case PROTNUM_IPV6_EXT_EXP1:
+        case PROTNUM_IPV6_EXT_EXP2:
+            if (gnrc_netapi_dispatch_receive(GNRC_NETTYPE_RPINT,
+                                     GNRC_NETREG_DEMUX_CTX_ALL,
+                                     pkt) == 0) {
+                /* No rpINT thread running. Mark as extension and continue processing*/
+                DEBUG("ipv6_ext: No rpINT thread running");
+
+                if (_mark_extension_header(pkt) == NULL) {
+                    return NULL;
+                }
+                return pkt;
+            }
+
+            /* Further processing is done by rpINT */
+            return NULL;
+#endif /* MODULE_GNRC_RPINT */
         default:
             break;
     }

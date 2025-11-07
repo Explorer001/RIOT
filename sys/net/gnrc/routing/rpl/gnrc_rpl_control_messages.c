@@ -231,7 +231,11 @@ void gnrc_rpl_send(gnrc_pktsnip_t *pkt, kernel_pid_t iface, ipv6_addr_t *src, ip
     gnrc_netif_hdr_set_netif(hdr->data, netif);
     pkt = gnrc_pkt_prepend(pkt, hdr);
 
+#ifdef MODULE_GNRC_RPINT
+    if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_RPINT, GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
+#else
     if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_IPV6, GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
+#endif
         DEBUG("RPL: cannot send packet: no subscribers found.\n");
         gnrc_pktbuf_release(pkt);
     }

@@ -328,6 +328,9 @@ static bool _is_ipv6_hdr(gnrc_pktsnip_t *hdr)
 {
 #ifdef MODULE_GNRC_IPV6_EXT
     return (hdr->type == GNRC_NETTYPE_IPV6) ||
+#ifdef MODULE_GNRC_RPINT
+           (hdr->type == GNRC_NETTYPE_RPINT) ||
+#endif
            (hdr->type == GNRC_NETTYPE_IPV6_EXT);
 #else
     return (hdr->type == GNRC_NETTYPE_IPV6);
