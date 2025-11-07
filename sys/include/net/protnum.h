@@ -175,6 +175,8 @@ extern "C" {
 #define PROTNUM_SHIM6                (140)      /**< Shim6 Protocol */
 #define PROTNUM_WESP                 (141)      /**< Wrapped Encapsulating Security Payload */
 #define PROTNUM_ROHC                 (142)      /**< Robust Header Compression */
+#define PROTNUM_IPV6_EXT_EXP1        (253)      /**< IPv6 Experimental and Testing */
+#define PROTNUM_IPV6_EXT_EXP2        (254)      /**< IPv6 Experimental and Testing */
 #define PROTNUM_RESERVED             (255)      /**< Reserved */
 
 #ifdef __cplusplus
