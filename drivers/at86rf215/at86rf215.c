@@ -263,6 +263,10 @@ int at86rf215_tx_prepare(at86rf215_t *dev)
         return -EBUSY;
     }
 
+    if (dev->flags & AT86RF215_OPT_AGCH) {
+        return -EBUSY;
+    }
+
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 
     return 0;
