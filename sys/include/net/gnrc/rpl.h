@@ -795,6 +795,13 @@ void gnrc_rpl_send(gnrc_pktsnip_t *pkt, kernel_pid_t iface, ipv6_addr_t *src, ip
 uint8_t gnrc_rpl_gen_instance_id(bool local);
 
 /**
+ * @brief Set the default values for trickle
+ *
+ * @param[in] conf The new configuration
+ */
+void gnrc_rpl_set_default_trickle_conf(const gnrc_rpl_trickle_conf_t *conf);
+
+/**
  * @brief (De-)Activate the transmission of Prefix Information Options within DIOs
  *        for a particular DODAG. This function has no effect if
  *        CONFIG_GNRC_RPL_WITHOUT_PIO is set.

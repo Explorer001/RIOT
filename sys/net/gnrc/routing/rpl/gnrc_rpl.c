@@ -65,6 +65,13 @@ static uint8_t _instance_id;
 gnrc_rpl_instance_t gnrc_rpl_instances[GNRC_RPL_INSTANCES_NUMOF];
 gnrc_rpl_parent_t gnrc_rpl_parents[GNRC_RPL_PARENTS_NUMOF];
 
+/* Default trickle timer values */
+gnrc_rpl_trickle_conf_t gnrc_rpl_default_trickle_cfg = {
+    .k = CONFIG_GNRC_RPL_DEFAULT_DIO_REDUNDANCY_CONSTANT,
+    .imin = CONFIG_GNRC_RPL_DEFAULT_DIO_INTERVAL_MIN,
+    .imax = CONFIG_GNRC_RPL_DEFAULT_DIO_INTERVAL_DOUBLINGS,
+};
+
 #ifdef MODULE_NETSTATS_RPL
 netstats_rpl_t gnrc_rpl_netstats;
 #endif
@@ -134,6 +141,13 @@ kernel_pid_t gnrc_rpl_init(kernel_pid_t if_pid)
     return gnrc_rpl_pid;
 }
 
+void gnrc_rpl_set_default_trickle_conf(const gnrc_rpl_trickle_conf_t *conf)
+{
+    if (conf != NULL) {
+        memcpy(&gnrc_rpl_default_trickle_cfg, conf, sizeof(gnrc_rpl_default_trickle_cfg));
+    }
+}
+
 gnrc_rpl_instance_t *gnrc_rpl_root_init(uint8_t instance_id, const ipv6_addr_t *dodag_id,
                                         bool gen_inst_id, bool local_inst_id)
 {
@@ -153,9 +167,9 @@ gnrc_rpl_instance_t *gnrc_rpl_root_init(uint8_t instance_id, const ipv6_addr_t *
 
     dodag->dtsn = 1;
     dodag->prf = 0;
-    dodag->dio_interval_doubl = CONFIG_GNRC_RPL_DEFAULT_DIO_INTERVAL_DOUBLINGS;
-    dodag->dio_min = CONFIG_GNRC_RPL_DEFAULT_DIO_INTERVAL_MIN;
-    dodag->dio_redun = CONFIG_GNRC_RPL_DEFAULT_DIO_REDUNDANCY_CONSTANT;
+    dodag->dio_interval_doubl = gnrc_rpl_default_trickle_cfg.imax;
+    dodag->dio_min = gnrc_rpl_default_trickle_cfg.imin;
+    dodag->dio_redun = gnrc_rpl_default_trickle_cfg.k;
     dodag->default_lifetime = CONFIG_GNRC_RPL_DEFAULT_LIFETIME;
     dodag->lifetime_unit = CONFIG_GNRC_RPL_LIFETIME_UNIT;
     dodag->version = GNRC_RPL_COUNTER_INIT;

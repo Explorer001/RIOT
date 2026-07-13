@@ -234,6 +234,11 @@ typedef struct gnrc_rpl_parent gnrc_rpl_parent_t;
 typedef struct gnrc_rpl_instance gnrc_rpl_instance_t;
 
 /**
+ * @brief Trickle parameter configuration.
+ */
+typedef struct gnrc_rpl_trickle_conf gnrc_rpl_trickle_conf_t;
+
+/**
  * @cond INTERNAL */
 struct gnrc_rpl_parent {
     gnrc_rpl_parent_t *next;        /**< pointer to the next parent */
@@ -331,6 +336,12 @@ struct gnrc_rpl_dodag {
                                          (see @ref GNRC_RPL_REQ_DIO_OPTS "DIO Options") */
     evtimer_msg_event_t dao_event;  /**< DAO TX events (see @ref GNRC_RPL_MSG_TYPE_DODAG_DAO_TX) */
     trickle_t trickle;              /**< trickle representation */
+};
+
+struct gnrc_rpl_trickle_conf {
+    uint8_t k;    /**<  Redundancy constant */
+    uint8_t imin; /**< Minimum interval size */
+    uint8_t imax; /**< Maximum number of doublings */
 };
 
 struct gnrc_rpl_instance {
